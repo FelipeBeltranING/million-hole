@@ -1,10 +1,11 @@
 extends Node2D
-# Dinero que sale disparado del agujero. Se recoge caminando encima y expira.
+# Dinero que sale disparado del vórtice. Se recoge caminando encima y expira.
 # Tipos: "coin" (moneda, gira), "bill" (billete), "bar" (lingote).
 # main.gd decide el tipo y el valor (COIN_VALUE / BILL_VALUE / BAR_VALUE).
 # NOTA: los dibujos son PROVISIONALES (placeholders) hasta tener los assets definitivos.
 # Para cambiarlos, reemplaza el contenido de _draw() por un Sprite2D / textura.
 
+const Assets = preload("res://assets.gd")
 const BASE_LIFETIME := 6.0   # segundos antes de desaparecer (sin mejoras)
 const BLINK_TIME := 2.0
 const FLY_TIME := 0.45
@@ -37,6 +38,12 @@ func _process(delta: float) -> void:
 		queue_redraw()   # la moneda gira
 
 func _draw() -> void:
+	# con asset: res://assets/coin.png | bill.png | bar.png (la moneda gira achatandose, como el provisional)
+	var spin := Vector2.ONE
+	if kind == "coin":
+		spin = Vector2(maxf(absf(cos(Time.get_ticks_msec() / 180.0 + spin_offset)), 0.15), 1.0)
+	if Assets.draw(self, kind, Assets.SIZES[kind], Vector2.ZERO, 0.0, spin):
+		return
 	match kind:
 		"bill":
 			draw_rect(Rect2(-12, -7, 24, 14), Color(0.45, 0.80, 0.50))

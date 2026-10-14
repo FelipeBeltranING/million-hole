@@ -29,8 +29,8 @@ func _ready() -> void:
 	quit.pressed.connect(get_tree().quit)
 	box.add_child(quit)
 
-	box.add_child(_label("WASD / Flechas: mover   |   E / Espacio: recoger cosas o tirarlas en el agujero", 16, Color(0.7, 0.7, 0.75)))
-	box.add_child(_label("Q: bolsazo (mejora de la boutique)   |   Shift: turbo (consumible)", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("WASD / Flechas: mover   |   E / Espacio: recoger cosas o tirarlas en el vórtice", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("Q: bolsazo (mejora)   |   Shift: turbo   |   F: flash cegador   (se compran en la boutique)", 16, Color(0.7, 0.7, 0.75)))
 	box.add_child(_label("El progreso NO se guarda: al cerrar el juego se pierde todo.", 16, Color(0.7, 0.7, 0.75)))
 
 func _label(text: String, font_size: int, color: Color) -> Label:

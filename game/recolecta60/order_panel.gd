@@ -1,5 +1,5 @@
 extends Node2D
-# Panel del HUD que muestra el pedido actual del pozo (3 objetos).
+# Panel del HUD que muestra el pedido actual del vórtice (3 objetos).
 
 const ItemDB = preload("res://item_database.gd")
 const W := 320.0
@@ -23,9 +23,7 @@ func _draw() -> void:
 		var done: bool = s["done"]
 		var y := 66.0 + i * 36.0
 		var a := 0.35 if done else 1.0
-		var col: Color = item["color"]
-		col.a = a
-		ItemDB.draw_shape(self, item["shape"], col, 11.0, Vector2(28, y - 6.0))
+		ItemDB.draw_item(self, item, 11.0, Vector2(28, y - 6.0), 0.0, a)
 		draw_string(font, Vector2(52, y), item["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, a))
 		if done:
 			var green := Color(0.3, 0.95, 0.4)

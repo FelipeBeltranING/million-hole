@@ -1,5 +1,6 @@
 extends Node2D
-# Juego principal: mapa, cosas de lujo, caprichos (pedido), dinero, combo y bonus de tiempo.
+# Juego principal: mapa, cosas de lujo, caprichos (pedido), dinero, combo, bonus de tiempo,
+# cuota, peligros y (cada 5 rondas) el jefe de la gala.
 
 const ItemDB = preload("res://item_database.gd")
 const ItemScript = preload("res://item.gd")
@@ -9,20 +10,22 @@ const HudScript = preload("res://hud.gd")
 const CoinScript = preload("res://coin.gd")
 const TimeBonusScript = preload("res://time_bonus.gd")
 const HazardScript = preload("res://hazard.gd")
+const Assets = preload("res://assets.gd")
 
 # --- Ronda ---
-const GAME_TIME := 30.0     # segundos iniciales
-const MAX_TIME := 60.0      # el reloj nunca pasa de esto
+const MAX_TIME := 60.0      # el reloj nunca pasa de esto (+15 en la gala)
 const MARGIN := 50.0
 
 # --- Objetos en el mapa ---
 const ITEMS_ON_MAP := 18
 const ITEM_RESPAWN := 1.5   # cada cuantos segundos reaparece uno si faltan
+# En la gala del jefe hacen falta MUCHOS mas objetos (los caprichos son su unica debilidad)
+const BOSS_ITEMS_ON_MAP := 36
+const BOSS_ITEM_RESPAWN := 0.45
 
 # --- Combo ---
 const COMBO_WINDOW := 6.0
-const COMBO_STEP := 0.5
-const COMBO_MAX := 3.0
+const COMBO_STEP := 0.5     # el tope (x3, o x5 con el Anillo del combo) lo da Game.combo_max()
 
 # --- Pedido del pozo ---
 const ORDER_SIZE := 3
@@ -35,26 +38,34 @@ const ORDER_COMPLETE_COINS := 8
 const COIN_VALUE := 1     # moneda (la mas comun)
 const BILL_VALUE := 2     # billete
 const BAR_VALUE := 3      # lingote
-const BILL_CHANCE := 0.16   # 16% de las piezas son billetes (antes 20%)
-const BAR_CHANCE := 0.04    # 4% son lingotes (antes 6%); el resto, ~80%, monedas
+const BILL_CHANCE := 0.16   # 16% de las piezas son billetes
+const BAR_CHANCE := 0.04    # 4% son lingotes; el resto, ~80%, monedas
 
 # --- Relojes de bonus ---
 const BONUS_INTERVAL := 7.0
 const BONUS_MAX_ON_MAP := 2
 const BONUS_SECONDS := 2.0
 
-var time_left := GAME_TIME
+var time_left := 30.0
+var max_time := MAX_TIME
+var quota := 0
+var quota_toast_done := false
+var passed := false
+var boss_round := false
+var boss = null               # el jefe (un hazard.gd con kind "boss"), o null
+var boss_defeated := false
+var order_size := ORDER_SIZE
+var items_on_map := ITEMS_ON_MAP     # en la gala sube a BOSS_ITEMS_ON_MAP
+var item_respawn := ITEM_RESPAWN     # en la gala baja a BOSS_ITEM_RESPAWN
 var score := 0
 var coins_collected := 0
+var money_frac := 0.0         # resto fraccionario de los multiplicadores de dinero
 var orders_completed := 0
 var combo := 0
 var combo_timer := 0.0
 var respawn_timer := ITEM_RESPAWN
 var bonus_timer := BONUS_INTERVAL
 var order_slots: Array = []   # [{"item": Dictionary, "done": bool}, ...]
-var quota := 0
-var quota_toast_done := false
-var passed := false
 var running := true
 var can_leave := false
 var tally := {}
@@ -65,16 +76,31 @@ var hud
 
 func _ready() -> void:
 	randomize()
-	time_left = GAME_TIME + Game.start_time_bonus()
-	quota = Game.quota_for(Game.round_number)
+	var r := Game.round_number
+	boss_round = Game.is_boss_round(r)
+	order_size = Game.BOSS_ORDER_SIZE if boss_round else ORDER_SIZE
+	items_on_map = BOSS_ITEMS_ON_MAP if boss_round else ITEMS_ON_MAP
+	item_respawn = BOSS_ITEM_RESPAWN if boss_round else ITEM_RESPAWN
+	respawn_timer = item_respawn
+	time_left = Game.round_time(r)
+	max_time = maxf(MAX_TIME + (Game.BOSS_EXTRA_TIME if boss_round else 0.0), time_left)
+	quota = Game.current_quota(r)
 	var size := get_viewport_rect().size
 	map_rect = Rect2(Vector2(MARGIN, MARGIN), size - Vector2(MARGIN, MARGIN) * 2.0)
 
 	pit = PitScript.new()
+	pit.radius = pit.radius * Game.pit_scale()
 	pit.position = size / 2.0
+	var pplan := Game.pit_plan(r)
+	pit.map_rect = map_rect
+	pit.mode = pplan["mode"]
+	pit.interval = pplan["interval"]
+	pit.move_speed = pplan["speed"]
+	pit.relocating.connect(_on_pit_relocating)
+	pit.relocated.connect(_on_pit_relocated)
 	add_child(pit)
 
-	for i in ITEMS_ON_MAP:
+	for i in items_on_map:
 		_spawn_item()
 
 	player = PlayerScript.new()
@@ -95,11 +121,14 @@ func _ready() -> void:
 	hud.set_quota(quota)
 	hud.set_score(score)
 	hud.set_coins(Game.coins)
-	hud.set_round(Game.round_number, Game.best_round_score)
+	hud.set_round(r, Game.best_round_score, Game.CONTRACTS[Game.contract_id]["name"])
+	hud.set_relics(Game.relics)
 	hud.set_carry(player.carried, player.max_carry)
 	hud.set_combo(0, 1.0, 0.0)
 	_new_order()
 	_spawn_hazards()
+	if boss_round:
+		_spawn_boss()
 
 # ---------------------------------------------------------------- Objetos
 
@@ -119,7 +148,7 @@ func _spawn_item(data: Dictionary = {}, at = null) -> void:
 	add_child(item)
 	if player != null:
 		move_child(item, player.get_index())   # el jugador se dibuja encima
-	item.setup(data if not data.is_empty() else ItemDB.pick_weighted())
+	item.setup(data if not data.is_empty() else ItemDB.pick_weighted(Game.rarity_mults()))
 	item.set_highlight(_is_wanted(item.data["name"]))
 
 func _count_on_map(item_name: String) -> int:
@@ -145,7 +174,7 @@ func _new_order() -> void:
 	var pool: Array = ItemDB.ITEMS.duplicate()
 	pool.shuffle()
 	order_slots = []
-	for i in ORDER_SIZE:
+	for i in order_size:
 		order_slots.append({"item": pool[i], "done": false})
 		# asegurar que al menos uno de cada tipo pedido exista en el mapa
 		if _count_on_map(pool[i]["name"]) == 0:
@@ -166,19 +195,20 @@ func _process(delta: float) -> void:
 		return
 	time_left = maxf(time_left - delta, 0.0)
 	hud.set_time(time_left)
-	hud.set_tools(Game.level("bolsazo"), player.swing_cd, Game.stock_of("turbo"), Game.stock_of("shield"))
+	hud.set_tools(Game.level("bolsazo"), player.swing_cd,
+		Game.stock_of("turbo"), Game.stock_of("shield"), Game.stock_of("flash"))
 	_update_combo(delta)
 
 	respawn_timer -= delta
 	if respawn_timer <= 0.0:
-		respawn_timer = ITEM_RESPAWN
-		if get_tree().get_nodes_in_group("items").size() < ITEMS_ON_MAP:
+		respawn_timer = item_respawn
+		if get_tree().get_nodes_in_group("items").size() < items_on_map:
 			_spawn_item()
 
 	bonus_timer -= delta
 	if bonus_timer <= 0.0:
 		bonus_timer = BONUS_INTERVAL
-		if get_tree().get_nodes_in_group("time_bonuses").size() < BONUS_MAX_ON_MAP:
+		if not Game.no_time_bonuses() and get_tree().get_nodes_in_group("time_bonuses").size() < BONUS_MAX_ON_MAP:
 			_spawn_time_bonus()
 
 	if time_left <= 0.0:
@@ -195,19 +225,20 @@ func _update_combo(delta: float) -> void:
 func _multiplier() -> float:
 	if combo <= 0:
 		return 1.0
-	return minf(1.0 + COMBO_STEP * float(combo - 1), COMBO_MAX)
+	return minf(1.0 + COMBO_STEP * float(combo - 1), Game.combo_max())
 
 # ---------------------------------------------------------------- Eventos
 
 func _on_items_deposited(items: Array) -> void:
 	combo += 1
-	combo_timer = COMBO_WINDOW + Game.combo_window_bonus()
+	combo_timer = maxf(2.0, COMBO_WINDOW + Game.combo_window_bonus())
 	var mult := _multiplier()
+	var om := Game.order_mult()
 	var coin_total := 0
 	var slot_bonus := 0
 	for it in items:
 		var pts := int(it["points"])
-		score += int(roundf(pts * mult))
+		score += int(roundf(pts * mult * Game.score_mult()))
 		coin_total += ceili(pts * mult)
 		tally[it["name"]] = int(tally.get(it["name"], 0)) + 1
 		# el objeto cuenta para el pedido si todavia falta
@@ -217,6 +248,7 @@ func _on_items_deposited(items: Array) -> void:
 				slot_bonus += pts * ORDER_SLOT_MULT
 				break
 	if slot_bonus > 0:
+		slot_bonus = roundi(float(slot_bonus) * om)
 		score += slot_bonus
 		hud.toast("Pedido +%d" % slot_bonus, Color(1.0, 0.82, 0.15))
 	_spawn_coins(coin_total)
@@ -227,12 +259,15 @@ func _on_items_deposited(items: Array) -> void:
 
 	if _order_is_complete():
 		orders_completed += 1
-		score += ORDER_COMPLETE_POINTS
-		time_left = minf(time_left + ORDER_COMPLETE_TIME, MAX_TIME)
-		_spawn_coins(ORDER_COMPLETE_COINS)
+		score += roundi(ORDER_COMPLETE_POINTS * om)
+		time_left = minf(time_left + ORDER_COMPLETE_TIME, max_time)
+		_spawn_coins(roundi(ORDER_COMPLETE_COINS * om))
 		hud.set_score(score)
 		_check_quota()
-		hud.toast("¡PEDIDO COMPLETO!  +%ds" % int(ORDER_COMPLETE_TIME), Color(0.3, 0.95, 0.4))
+		if boss != null:
+			_damage_boss()
+		else:
+			hud.toast("¡PEDIDO COMPLETO!  +%ds" % int(ORDER_COMPLETE_TIME), Color(0.3, 0.95, 0.4))
 		_new_order()
 	else:
 		_refresh_highlights()
@@ -248,6 +283,12 @@ func _show_quota_toast() -> void:
 	if running:
 		hud.toast("¡CUOTA CUMPLIDA!", Color(0.4, 1.0, 0.5))
 
+func _on_pit_relocating(secs: float) -> void:
+	hud.toast("¡El vórtice se muda!", Color(1.0, 0.82, 0.15))
+
+func _on_pit_relocated() -> void:
+	pass
+
 func _on_shield_blocked() -> void:
 	hud.toast("¡ESCUDO!", Color(0.4, 0.9, 1.0))
 
@@ -260,12 +301,16 @@ func _on_player_hit(dropped: Array) -> void:
 		_spawn_item(it, p)   # lo que llevabas cae al suelo cerca de ti
 
 func _on_coin_collected(value: int) -> void:
-	coins_collected += value
-	Game.coins += value   # las monedas ya NO dan puntos: son dinero para la tienda
+	# los multiplicadores de dinero (contrato, reliquias) pueden dar decimales: se acumula el resto
+	money_frac += float(value) * Game.money_mult()
+	var gain := floori(money_frac)
+	money_frac -= float(gain)
+	coins_collected += gain
+	Game.coins += gain   # las monedas ya NO dan puntos: son dinero para la tienda
 	hud.set_coins(Game.coins)
 
 func _on_time_bonus_collected(seconds: float) -> void:
-	time_left = minf(time_left + seconds, MAX_TIME)
+	time_left = minf(time_left + seconds, max_time)
 	hud.toast("+%ds" % int(seconds), Color(0.30, 0.90, 0.95))
 
 # ---------------------------------------------------------------- Spawns
@@ -335,6 +380,8 @@ func _spawn_hazards() -> void:
 			h.map_rect = map_rect
 			h.target = player
 			h.speed = Game.paparazzi_speed(r)
+			if kind == "paparazzi":
+				h.sleep_timer = Game.pap_sleep()
 			placed.append(h.position)
 			add_child(h)
 			if kind == "puddle":
@@ -346,6 +393,50 @@ func _spawn_hazards() -> void:
 	elif r == Game.PAPARAZZI_START_ROUND:
 		hud.toast("¡Cuidado! Paparazzi", Color(1.0, 0.6, 0.2))   # (usa el bolsazo para aturdirlos)
 
+# ---------------------------------------------------------------- Jefe
+
+func _spawn_boss() -> void:
+	var r := Game.round_number
+	boss = HazardScript.new()
+	boss.kind = "boss"
+	boss.position = _hazard_pos("paparazzi", [])   # lejos del jugador
+	boss.map_rect = map_rect
+	boss.target = player
+	boss.speed = Game.boss_speed(r)
+	boss.boss_size = Game.boss_radius(r)
+	boss.orb_speed = Game.boss_orb_speed(r)
+	boss.max_hp = Game.boss_hp(r)
+	boss.hp = boss.max_hp
+	boss.shoot_interval = Game.boss_shoot_interval(r)
+	add_child(boss)
+	move_child(boss, player.get_index())
+	hud.set_boss(boss.hp, boss.max_hp)
+	hud.toast("¡GALA!  Completa caprichos para derrotar al jefe", Color(1.0, 0.82, 0.15))
+
+# Cada capricho completado le hace 1 de daño al jefe
+func _damage_boss() -> void:
+	boss.hp -= 1
+	var away: Vector2 = (boss.position - pit.position).normalized()
+	if away == Vector2.ZERO:
+		away = Vector2.RIGHT
+	if boss.hp <= 0:
+		boss_defeated = true
+		for h in get_tree().get_nodes_in_group("hazards"):
+			if h.kind == "orb":
+				h.queue_free()
+		boss.queue_free()
+		boss = null
+		_spawn_coins(40)
+		hud.hide_boss()
+		hud.toast("¡JEFE DERROTADO!", Color(1.0, 0.82, 0.15))
+	else:
+		var was_raging: bool = boss.is_raging()
+		boss.boss_damaged(away)
+		hud.set_boss(boss.hp, boss.max_hp)
+		if boss.is_raging() and not was_raging:
+			hud.toast("¡EL JEFE SE ENFURECE!", Color(1.0, 0.25, 0.3))
+		hud.toast("¡GOLPE AL JEFE!  (%d/%d)" % [boss.max_hp - boss.hp, boss.max_hp], Color(1.0, 0.55, 0.2))
+
 # ---------------------------------------------------------------- Fin
 
 func _end_game() -> void:
@@ -353,13 +444,17 @@ func _end_game() -> void:
 	player.active = false
 	for h in get_tree().get_nodes_in_group("hazards"):
 		h.set_process(false)
-	passed = score >= quota
+	pit.set_process(false)
+	passed = score >= quota and (not boss_round or boss_defeated)
+	if passed and boss_round:
+		Game.free_relic_pending = true   # premio: una reliquia gratis en la boutique
 	var new_record := Game.record_round(score)
 	hud.set_combo(0, 1.0, 0.0)
 	hud.show_round_result({
 		"passed": passed, "score": score, "quota": quota, "coins": coins_collected,
 		"orders": orders_completed, "tally": tally, "round": Game.round_number,
-		"new_record": new_record,
+		"new_record": new_record, "contract": Game.CONTRACTS[Game.contract_id]["name"],
+		"boss_round": boss_round, "boss_defeated": boss_defeated,
 		"run_best_score": Game.run_best_score, "run_best_round": Game.run_best_round,
 		"session_best": Game.best_round_score, "session_best_round": Game.best_round_no})
 	# pequeña pausa para no saltarse la pantalla sin querer
@@ -380,5 +475,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().change_scene_to_file("res://menu.tscn")
 
 func _draw() -> void:
+	# con asset: res://assets/background.png (1280x720, cubre toda la pantalla)
+	if Assets.draw_fill(self, "background", Rect2(Vector2.ZERO, get_viewport_rect().size)):
+		return
 	draw_rect(map_rect, Color(0.16, 0.22, 0.16))
 	draw_rect(map_rect, Color(0.45, 0.35, 0.2), false, 4.0)

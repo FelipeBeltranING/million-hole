@@ -15,6 +15,8 @@ var message_label: Label
 var hint_label: Label
 var quota_value := 0
 var tools_label: Label
+var boss_label: Label
+var relics_label: Label
 
 func _ready() -> void:
 	var size := get_viewport().get_visible_rect().size
@@ -28,9 +30,20 @@ func _ready() -> void:
 	combo_label.visible = false
 	tools_label = _make_label(Vector2(20, 186), 18)
 	tools_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
+	boss_label = _make_label(Vector2(0, 8), 26)
+	boss_label.size = Vector2(size.x, 40)
+	boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boss_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.4))
+	boss_label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	boss_label.add_theme_constant_override("outline_size", 6)
+	boss_label.visible = false
+	relics_label = _make_label(Vector2(20, 646), 15)
+	relics_label.size = Vector2(1240, 36)
+	relics_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	relics_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.15))
 	round_label = _make_label(Vector2(size.x - 340.0, 172.0), 18)
 	var help := _make_label(Vector2(20, 685), 16)
-	help.text = "WASD / Flechas: mover  |  E / Espacio: recoger cosas o tirarlas en el agujero  |  Camina sobre el dinero y los relojes"
+	help.text = "WASD / Flechas: mover  |  E / Espacio: recoger cosas o tirarlas en el vórtice  |  Camina sobre el dinero y los relojes"
 	order_panel = OrderPanelScript.new()
 	order_panel.position = Vector2(size.x - 340.0, 14.0)
 	add_child(order_panel)
@@ -60,12 +73,14 @@ func set_time(seconds: float) -> void:
 	time_label.add_theme_color_override("font_color", c)
 
 # Herramientas: bolsazo (si lo tienes), turbo y escudo
-func set_tools(bolsazo_lvl: int, cd: float, turbo_n: int, shield_n: int) -> void:
+func set_tools(bolsazo_lvl: int, cd: float, turbo_n: int, shield_n: int, flash_n: int) -> void:
 	var parts := PackedStringArray()
 	if bolsazo_lvl > 0:
 		parts.append("Q Bolsazo: %s" % ("LISTO" if cd <= 0.0 else "%.1fs" % cd))
 	if turbo_n > 0:
 		parts.append("Shift Turbo x%d" % turbo_n)
+	if flash_n > 0:
+		parts.append("F Flash x%d" % flash_n)
 	if shield_n > 0:
 		parts.append("Escudo x%d" % shield_n)
 	tools_label.text = "   |   ".join(parts)
@@ -118,8 +133,25 @@ func toast(text: String, color: Color = Color(1, 1, 1)) -> void:
 	tw.tween_property(l, "modulate:a", 0.0, 0.8).set_delay(0.5)
 	tw.finished.connect(l.queue_free)
 
-func set_round(round_number: int, best: int) -> void:
-	round_label.text = "Ronda %d   |   Mejor ronda: %d pts" % [round_number, best]
+func set_round(round_number: int, best: int, contract_name: String = "") -> void:
+	round_label.text = "Ronda %d   |   Mejor ronda: %d pts\nContrato: %s" % [round_number, best, contract_name]
+
+func set_relics(ids: Array) -> void:
+	if ids.is_empty():
+		relics_label.text = ""
+		return
+	var names := PackedStringArray()
+	for id in ids:
+		names.append(Game.RELICS[id]["name"])
+	relics_label.text = "Reliquias: " + ", ".join(names)
+
+# Barra de vida del jefe (texto): [####..]
+func set_boss(hp: int, max_hp: int) -> void:
+	boss_label.visible = true
+	boss_label.text = "PAPARAZZI SUPREMO   [%s%s]" % ["#".repeat(maxi(hp, 0)), ".".repeat(maxi(max_hp - hp, 0))]
+
+func hide_boss() -> void:
+	boss_label.visible = false
 
 # info: passed, score, quota, coins, orders, tally, round, new_record,
 #       run_best_score, run_best_round, session_best, session_best_round
@@ -127,8 +159,11 @@ func show_round_result(info: Dictionary) -> void:
 	var size := get_viewport().get_visible_rect().size
 	var text := ""
 	if info["passed"]:
-		text = "RONDA %d SUPERADA\n\nPuntos: %d / cuota %d     Dinero: $%d     Caprichos: %d\n\n" % [
-			info["round"], info["score"], info["quota"], info["coins"], info["orders"]]
+		var title := "RONDA %d SUPERADA" % info["round"]
+		if info["boss_round"]:
+			title = "¡GALA SUPERADA!  JEFE DERROTADO"
+		text = "%s\n\nPuntos: %d / cuota %d     Dinero: $%d     Caprichos: %d\nContrato: %s\n\n" % [
+			title, info["score"], info["quota"], info["coins"], info["orders"], info["contract"]]
 		var row := PackedStringArray()
 		for item_name in info["tally"]:
 			row.append("%s x%d" % [item_name, info["tally"][item_name]])
@@ -137,12 +172,19 @@ func show_round_result(info: Dictionary) -> void:
 				row = PackedStringArray()
 		if row.size() > 0:
 			text += "     ".join(row) + "\n"
+		if info["boss_round"]:
+			text += "\nPREMIO: una reliquia GRATIS en la boutique\n"
 		if info["new_record"]:
 			text += "\nNUEVO RECORD DE LA SESION"
 		hint_label.text = "ENTER: ir a la boutique     |     ESC: terminar partida"
 	else:
-		text = "FIN DE LA PARTIDA\n\nNo llegaste a la cuota en la ronda %d\nPuntos: %d / cuota %d   (te faltaron %d)\n\n" % [
-			info["round"], info["score"], info["quota"], info["quota"] - info["score"]]
+		text = "FIN DE LA PARTIDA\n\n"
+		if info["score"] < info["quota"]:
+			text += "No llegaste a la cuota en la ronda %d\nPuntos: %d / cuota %d   (te faltaron %d)\n" % [
+				info["round"], info["score"], info["quota"], info["quota"] - info["score"]]
+		if info["boss_round"] and not info["boss_defeated"]:
+			text += "No derrotaste al Paparazzi Supremo (completa caprichos para dañarlo)\n"
+		text += "\n"
 		text += "Rondas superadas: %d\n" % (int(info["round"]) - 1)
 		text += "Mejor ronda de esta partida: %d puntos (ronda %d)\n" % [info["run_best_score"], info["run_best_round"]]
 		text += "Record de la sesion: %d puntos (ronda %d)\n" % [info["session_best"], info["session_best_round"]]

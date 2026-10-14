@@ -1,0 +1,39 @@
+CARPETA DE ASSETS  (res://assets/)
+Copia aqui los PNG con el NOMBRE EXACTO de la lista. El juego los detecta solo (no hay que tocar codigo).
+Si falta un archivo, ese objeto sigue usando su dibujo provisional.
+
+Reglas de arte:
+ - PNG con fondo transparente, vista desde ARRIBA (top-down).
+ - Personajes (player, paparazzi, boss): dibujados MIRANDO A LA DERECHA. El juego los gira segun hacia donde van.
+ - Objeto centrado en el lienzo. Resolucion libre (recomendado 256 px de lado mayor; el juego lo escala).
+ - Tamaños en pantalla: se ajustan en assets.gd (SIZES) sin rehacer el arte.
+
+OBLIGATORIOS (25: 13 generales + 12 cosas de lujo)
+ player.png            heredera (mirando a la derecha)
+ paparazzi.png         paparazzi con camara (mirando a la derecha)
+ boss.png              Paparazzi Supremo, con corona (mirando a la derecha)
+ orb.png               destello que dispara el jefe
+ vortex.png            vortice (circular, gira solo)
+ puddle.png            charco de champan (circular)
+ spikes_off.png        pinchos escondidos (circular)
+ spikes_on.png         pinchos sacados (circular)
+ coin.png              moneda (de frente; el juego la hace girar)
+ bill.png              billete
+ bar.png               lingote
+ time_bonus.png        reloj de bonus (+2 s)
+ background.png        fondo 1280x720
+ item_collar_perlas.png    Collar de perlas
+ item_tarjeta_platino.png  Tarjeta platino
+ item_osito_oro.png        Osito bañado en oro
+ item_busto_marmol.png     Busto de marmol
+ item_guantelete.png       Guantelete de repuesto
+ item_poni_cristal.png     Poni de cristal
+ item_saco_dinero.png      Saco con $
+ item_mochila_cohete.png   Mochila cohete
+ item_dron.png             Dron carisimo
+ item_corona_rubies.png    Corona con rubies
+ item_cofre.png            Cofre sin abrir (legendario)
+ item_estatua_oro.png      Estatua de oro (legendario)
+
+OPCIONAL
+ boss_rage.png         jefe furioso (si no existe se usa boss.png con tinte rojo)

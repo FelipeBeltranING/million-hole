@@ -1,8 +1,9 @@
 extends CharacterBody2D
-# Jugador: WASD / flechas para moverse. E o Espacio = recoger / soltar en el pozo.
+# Jugador: WASD / flechas para moverse. E o Espacio = recoger / soltar en el vórtice.
 # Monedas y relojes se recogen solos al pasar por encima. Las mejoras vienen del autoload Game.
 
 const ItemDB = preload("res://item_database.gd")
+const Assets = preload("res://assets.gd")
 
 signal carry_changed(carried: Array, max_carry: int)
 signal items_deposited(items: Array)
@@ -38,10 +39,12 @@ var swing_cd := 0.0      # enfriamiento del bolsazo
 var swing_fx := 0.0      # animacion del bolsazo
 var turbo_timer := 0.0
 var fx_was := false
+var body_angle := 0.0      # giro suave del dibujo (el asset "player" se dibuja mirando a la derecha y se gira)
 
 func _ready() -> void:
 	speed = BASE_SPEED * Game.speed_mult()
 	max_carry = Game.max_carry()
+	pickup_radius += Game.pickup_bonus()
 
 func _physics_process(delta: float) -> void:
 	if not active:
@@ -56,6 +59,7 @@ func _physics_process(delta: float) -> void:
 	var dir := Vector2.ZERO if stun_timer > 0.0 else _read_direction()
 	if dir != Vector2.ZERO:
 		facing = dir
+		body_angle = lerp_angle(body_angle, facing.angle(), minf(1.0, delta * 18.0))
 		queue_redraw()
 	var turbo := TURBO_MULT if turbo_timer > 0.0 else 1.0
 	velocity = dir * speed * slow * turbo
@@ -86,7 +90,7 @@ func _take_hit() -> void:
 		invuln_timer = 1.0
 		shield_blocked.emit()
 		return
-	stun_timer = STUN_TIME
+	stun_timer = STUN_TIME * Game.stun_mult()
 	invuln_timer = INVULN_TIME
 	var dropped := carried.duplicate()
 	carried.clear()
@@ -134,6 +138,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_swing()
 		elif event.keycode == KEY_SHIFT:
 			_turbo()
+		elif event.keycode == KEY_F:
+			_flash()
 
 # Bolsazo: aturde (y empuja) a los paparazzi que esten cerca. Requiere la mejora de la boutique.
 func _swing() -> void:
@@ -147,6 +153,16 @@ func _swing() -> void:
 			h.get_stunned(Game.bolsazo_stun(), (h.position - position).normalized())
 	queue_redraw()
 
+# Flash cegador: consumible, aturde a TODOS los paparazzi del mapa 5 s
+func _flash() -> void:
+	if not Game.use_item("flash"):
+		return
+	swing_fx = SWING_FX_TIME
+	for h in get_tree().get_nodes_in_group("hazards"):
+		if h.kind == "paparazzi":
+			h.get_stunned(5.0, Vector2.ZERO)
+	queue_redraw()
+
 # Turbo: consumible
 func _turbo() -> void:
 	if turbo_timer > 0.0 or not Game.use_item("turbo"):
@@ -155,7 +171,7 @@ func _turbo() -> void:
 	queue_redraw()
 
 func _interact() -> void:
-	# Dentro del pozo: soltar todo lo que cargas
+	# Dentro del vórtice: soltar todo lo que cargas
 	if pit.contains(position):
 		if carried.size() > 0:
 			items_deposited.emit(carried.duplicate())
@@ -184,20 +200,23 @@ func _notify() -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	if swing_fx > 0.0:
+	if swing_fx > 0.0 and Game.bolsazo_radius() > 0.0:
 		var p := 1.0 - swing_fx / SWING_FX_TIME
 		draw_arc(Vector2.ZERO, Game.bolsazo_radius() * p, 0.0, TAU, 48, Color(1.0, 0.7, 0.9, 1.0 - p), 5.0)
 	if turbo_timer > 0.0:
 		draw_arc(Vector2.ZERO, RADIUS + 7.0, 0.0, TAU, 32, Color(0.4, 0.9, 1.0, 0.9), 3.0)
-	draw_circle(Vector2.ZERO, RADIUS, Color(1.0, 0.60, 0.78))
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 32, Color(1, 1, 1), 2.0)
-	draw_line(Vector2.ZERO, facing * RADIUS, Color(1, 1, 1), 3.0)
-	# tiara dorada
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(-9, -RADIUS + 3), Vector2(-9, -RADIUS - 6), Vector2(-4.5, -RADIUS - 1),
-		Vector2(0, -RADIUS - 9), Vector2(4.5, -RADIUS - 1), Vector2(9, -RADIUS - 6),
-		Vector2(9, -RADIUS + 3)]), Color(1.0, 0.82, 0.15))
+	if not Assets.draw(self, "player", Assets.SIZES["player"], Vector2.ZERO, body_angle):
+		# dibujo provisional
+		draw_circle(Vector2.ZERO, RADIUS, Color(1.0, 0.60, 0.78))
+		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 32, Color(1, 1, 1), 2.0)
+		draw_line(Vector2.ZERO, facing * RADIUS, Color(1, 1, 1), 3.0)
+		# tiara dorada
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(-9, -RADIUS + 3), Vector2(-9, -RADIUS - 6), Vector2(-4.5, -RADIUS - 1),
+			Vector2(0, -RADIUS - 9), Vector2(4.5, -RADIUS - 1), Vector2(9, -RADIUS - 6),
+			Vector2(9, -RADIUS + 3)]), Color(1.0, 0.82, 0.15))
+	# lo que llevas: siempre arriba de la cabeza, sin girar
 	for i in carried.size():
 		var it: Dictionary = carried[i]
 		var x := (i - (carried.size() - 1) / 2.0) * 24.0
-		ItemDB.draw_shape(self, it["shape"], it["color"], 9.0, Vector2(x, -RADIUS - 30.0))
+		ItemDB.draw_item(self, it, 9.0, Vector2(x, -RADIUS - 30.0))
