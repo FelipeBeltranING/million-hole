@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://datkmhdfr4cws"]
+
+[ext_resource type="Script" uid="uid://bh66fkp0dulhb" path="res://shop.gd" id="1"]
+
+[node name="Shop" type="Control" unique_id=1665070507]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
