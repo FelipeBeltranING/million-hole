@@ -13,6 +13,8 @@ var order_panel
 var dim: ColorRect
 var message_label: Label
 var hint_label: Label
+var quota_value := 0
+var tools_label: Label
 
 func _ready() -> void:
 	var size := get_viewport().get_visible_rect().size
@@ -24,9 +26,11 @@ func _ready() -> void:
 	combo_label = _make_label(Vector2(20, 150), 26)
 	combo_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.15))
 	combo_label.visible = false
+	tools_label = _make_label(Vector2(20, 186), 18)
+	tools_label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0))
 	round_label = _make_label(Vector2(size.x - 340.0, 172.0), 18)
 	var help := _make_label(Vector2(20, 685), 16)
-	help.text = "WASD / Flechas: mover  |  E / Espacio: recoger o soltar en el pozo  |  Monedas y relojes: camina sobre ellos"
+	help.text = "WASD / Flechas: mover  |  E / Espacio: recoger cosas o tirarlas en el agujero  |  Camina sobre el dinero y los relojes"
 	order_panel = OrderPanelScript.new()
 	order_panel.position = Vector2(size.x - 340.0, 14.0)
 	add_child(order_panel)
@@ -55,17 +59,34 @@ func set_time(seconds: float) -> void:
 	var c := Color(1, 0.3, 0.3) if seconds <= 10.0 else Color(1, 1, 1)
 	time_label.add_theme_color_override("font_color", c)
 
+# Herramientas: bolsazo (si lo tienes), turbo y escudo
+func set_tools(bolsazo_lvl: int, cd: float, turbo_n: int, shield_n: int) -> void:
+	var parts := PackedStringArray()
+	if bolsazo_lvl > 0:
+		parts.append("Q Bolsazo: %s" % ("LISTO" if cd <= 0.0 else "%.1fs" % cd))
+	if turbo_n > 0:
+		parts.append("Shift Turbo x%d" % turbo_n)
+	if shield_n > 0:
+		parts.append("Escudo x%d" % shield_n)
+	tools_label.text = "   |   ".join(parts)
+
+func set_quota(q: int) -> void:
+	quota_value = q
+
+# Muestra puntos / cuota; se pone verde al alcanzar la cuota
 func set_score(points: int) -> void:
-	score_label.text = "Puntos: %d" % points
+	score_label.text = "Puntos: %d / %d" % [points, quota_value]
+	var c := Color(0.4, 1.0, 0.5) if points >= quota_value else Color(1, 1, 1)
+	score_label.add_theme_color_override("font_color", c)
 
 func set_coins(amount: int) -> void:
-	coins_label.text = "Monedas: %d" % amount
+	coins_label.text = "Dinero: $%d" % amount
 
 func set_carry(carried: Array, max_carry: int) -> void:
 	var names: PackedStringArray = []
 	for it in carried:
 		names.append(it["name"])
-	carry_label.text = "Cargando %d/%d: %s" % [carried.size(), max_carry, ", ".join(names)]
+	carry_label.text = "Llevas %d/%d: %s" % [carried.size(), max_carry, ", ".join(names)]
 
 func set_order(slots: Array) -> void:
 	order_panel.set_order(slots)
@@ -100,25 +121,40 @@ func toast(text: String, color: Color = Color(1, 1, 1)) -> void:
 func set_round(round_number: int, best: int) -> void:
 	round_label.text = "Ronda %d   |   Mejor ronda: %d pts" % [round_number, best]
 
-func show_game_over(score: int, coins: int, orders: int, tally: Dictionary, round_number: int) -> void:
+# info: passed, score, quota, coins, orders, tally, round, new_record,
+#       run_best_score, run_best_round, session_best, session_best_round
+func show_round_result(info: Dictionary) -> void:
 	var size := get_viewport().get_visible_rect().size
-	var text := "RONDA %d TERMINADA\n\nPuntos: %d     Monedas: %d     Pedidos: %d\n\n" % [round_number, score, coins, orders]
-	# objetos entregados, 3 por fila para que no se salga de la pantalla
-	var row := PackedStringArray()
-	for item_name in tally:
-		row.append("%s x%d" % [item_name, tally[item_name]])
-		if row.size() == 3:
+	var text := ""
+	if info["passed"]:
+		text = "RONDA %d SUPERADA\n\nPuntos: %d / cuota %d     Dinero: $%d     Caprichos: %d\n\n" % [
+			info["round"], info["score"], info["quota"], info["coins"], info["orders"]]
+		var row := PackedStringArray()
+		for item_name in info["tally"]:
+			row.append("%s x%d" % [item_name, info["tally"][item_name]])
+			if row.size() == 3:
+				text += "     ".join(row) + "\n"
+				row = PackedStringArray()
+		if row.size() > 0:
 			text += "     ".join(row) + "\n"
-			row = PackedStringArray()
-	if row.size() > 0:
-		text += "     ".join(row) + "\n"
+		if info["new_record"]:
+			text += "\nNUEVO RECORD DE LA SESION"
+		hint_label.text = "ENTER: ir a la boutique     |     ESC: terminar partida"
+	else:
+		text = "FIN DE LA PARTIDA\n\nNo llegaste a la cuota en la ronda %d\nPuntos: %d / cuota %d   (te faltaron %d)\n\n" % [
+			info["round"], info["score"], info["quota"], info["quota"] - info["score"]]
+		text += "Rondas superadas: %d\n" % (int(info["round"]) - 1)
+		text += "Mejor ronda de esta partida: %d puntos (ronda %d)\n" % [info["run_best_score"], info["run_best_round"]]
+		text += "Record de la sesion: %d puntos (ronda %d)\n" % [info["session_best"], info["session_best_round"]]
+		if info["new_record"]:
+			text += "\nNUEVO RECORD DE LA SESION"
+		hint_label.text = "ENTER: jugar de nuevo     |     ESC: volver al menu"
 	dim.size = size
 	dim.visible = true
 	message_label.add_theme_font_size_override("font_size", 28)
 	message_label.text = text
 	message_label.size = Vector2(size.x, size.y - 110.0)
 	message_label.visible = true
-	hint_label.text = "ENTER: ir a la tienda     |     ESC: terminar partida"
 	hint_label.size = Vector2(size.x, 50.0)
 	hint_label.position = Vector2(0.0, size.y - 90.0)
 	hint_label.visible = true

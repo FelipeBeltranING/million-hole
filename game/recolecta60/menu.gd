@@ -15,10 +15,10 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 16)
 	add_child(box)
 
-	box.add_child(_label("RECOLECTA 60", 64, Color(1.0, 0.82, 0.15)))
-	box.add_child(_label("Recoge objetos, cumple los pedidos del pozo y alarga el tiempo", 20, Color(0.8, 0.8, 0.85)))
+	box.add_child(_label(Game.TITLE, 48, Color(1.0, 0.82, 0.15)))
+	box.add_child(_label(Game.SUBTITLE, 20, Color(0.8, 0.8, 0.85)))
 	if Game.best_round_score > 0:
-		box.add_child(_label("Mejor ronda de esta sesion: %d puntos" % Game.best_round_score, 22, Color(0.3, 0.9, 0.95)))
+		box.add_child(_label("Mejor ronda de esta sesion: %d puntos (ronda %d)" % [Game.best_round_score, Game.best_round_no], 22, Color(0.3, 0.9, 0.95)))
 	else:
 		box.add_child(_label(" ", 22, Color(1, 1, 1)))
 
@@ -29,7 +29,8 @@ func _ready() -> void:
 	quit.pressed.connect(get_tree().quit)
 	box.add_child(quit)
 
-	box.add_child(_label("WASD / Flechas: mover   |   E / Espacio: recoger o soltar en el pozo", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("WASD / Flechas: mover   |   E / Espacio: recoger cosas o tirarlas en el agujero", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("Q: bolsazo (mejora de la boutique)   |   Shift: turbo (consumible)", 16, Color(0.7, 0.7, 0.75)))
 	box.add_child(_label("El progreso NO se guarda: al cerrar el juego se pierde todo.", 16, Color(0.7, 0.7, 0.75)))
 
 func _label(text: String, font_size: int, color: Color) -> Label:

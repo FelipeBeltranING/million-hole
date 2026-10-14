@@ -16,7 +16,7 @@ func _draw() -> void:
 	var gold := Color(1.0, 0.82, 0.15)
 	draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
 	draw_rect(Rect2(0, 0, W, H), gold, false, 2.0)
-	draw_string(font, Vector2(14, 28), "PEDIDO DEL POZO", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
+	draw_string(font, Vector2(14, 28), "CAPRICHOS DE HOY", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
 	for i in slots.size():
 		var s = slots[i]
 		var item: Dictionary = s["item"]

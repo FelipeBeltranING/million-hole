@@ -1,11 +1,12 @@
 extends Control
-# Tienda entre rondas. Las mejoras duran hasta terminar la partida o cerrar el juego.
+# Tienda entre rondas. Izquierda: mejoras permanentes (duran la partida). Derecha: consumibles (se gastan al usarlos).
 
 const MAIN_SCENE := "res://main.tscn"
 const MENU_SCENE := "res://menu.tscn"
 
 var coins_label: Label
-var rows := {}   # id -> {"label": Label, "button": Button}
+var rows := {}        # id de mejora -> {"label": Label, "button": Button}
+var item_rows := {}   # id de consumible -> {"label": Label, "button": Button}
 
 func _ready() -> void:
 	var bg := ColorRect.new()
@@ -13,32 +14,39 @@ func _ready() -> void:
 	add_child(bg)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var box := VBoxContainer.new()
-	box.position = Vector2(320, 24)
-	box.custom_minimum_size = Vector2(640, 0)
-	box.add_theme_constant_override("separation", 8)
-	add_child(box)
-
-	box.add_child(_label("TIENDA", 44, Color(1.0, 0.82, 0.15)))
-	box.add_child(_label("Ronda %d terminada  -  %d puntos" % [Game.round_number, Game.last_round_score], 20, Color(0.8, 0.8, 0.85)))
+	# Cabecera (ancho completo, centrada)
+	var head := VBoxContainer.new()
+	head.position = Vector2(0, 14)
+	head.custom_minimum_size = Vector2(1280, 0)
+	head.add_theme_constant_override("separation", 4)
+	add_child(head)
+	head.add_child(_label("BOUTIQUE", 44, Color(1.0, 0.82, 0.15)))
+	head.add_child(_label("Ronda %d superada  -  %d puntos   |   Proxima cuota: %d" % [
+		Game.round_number, Game.last_round_score, Game.quota_for(Game.round_number + 1)], 20, Color(0.8, 0.8, 0.85)))
 	coins_label = _label("", 28, Color(1.0, 0.82, 0.15))
-	box.add_child(coins_label)
+	head.add_child(coins_label)
 
+	# Columna izquierda: mejoras
+	var left := VBoxContainer.new()
+	left.position = Vector2(40, 150)
+	left.custom_minimum_size = Vector2(640, 0)
+	left.add_theme_constant_override("separation", 8)
+	add_child(left)
+	left.add_child(_label("MEJORAS", 22, Color(0.3, 0.9, 0.95)))
 	for id in Game.UPGRADES.keys():
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		var lbl := Label.new()
-		lbl.custom_minimum_size = Vector2(450, 0)
-		lbl.add_theme_font_size_override("font_size", 18)
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(170, 48)
-		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 18)
-		btn.pressed.connect(_on_buy.bind(id))
-		row.add_child(lbl)
-		row.add_child(btn)
-		box.add_child(row)
-		rows[id] = {"label": lbl, "button": btn}
+		rows[id] = _make_row(left, 430, _on_buy.bind(id))
+
+	# Columna derecha: consumibles + botones
+	var right := VBoxContainer.new()
+	right.position = Vector2(720, 150)
+	right.custom_minimum_size = Vector2(520, 0)
+	right.add_theme_constant_override("separation", 8)
+	add_child(right)
+	right.add_child(_label("CONSUMIBLES", 22, Color(0.3, 0.9, 0.95)))
+	for id in Game.CONSUMABLES.keys():
+		item_rows[id] = _make_row(right, 330, _on_buy_item.bind(id))
+	right.add_child(_label("Los consumibles te duran entre rondas hasta que los uses.", 15, Color(0.7, 0.7, 0.75)))
+	right.add_child(_label(" ", 20, Color(1, 1, 1)))
 
 	var next := Button.new()
 	next.text = "Siguiente ronda  (Enter)"
@@ -46,7 +54,7 @@ func _ready() -> void:
 	next.focus_mode = Control.FOCUS_NONE
 	next.add_theme_font_size_override("font_size", 22)
 	next.pressed.connect(_next_round)
-	box.add_child(next)
+	right.add_child(next)
 
 	var quit := Button.new()
 	quit.text = "Terminar partida y volver al menu  (Esc)"
@@ -54,9 +62,25 @@ func _ready() -> void:
 	quit.focus_mode = Control.FOCUS_NONE
 	quit.add_theme_font_size_override("font_size", 16)
 	quit.pressed.connect(_quit_run)
-	box.add_child(quit)
+	right.add_child(quit)
 
 	_refresh()
+
+func _make_row(parent: Control, label_w: float, on_press: Callable) -> Dictionary:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var lbl := Label.new()
+	lbl.custom_minimum_size = Vector2(label_w, 0)
+	lbl.add_theme_font_size_override("font_size", 17)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(170, 46)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.pressed.connect(on_press)
+	row.add_child(lbl)
+	row.add_child(btn)
+	parent.add_child(row)
+	return {"label": lbl, "button": btn}
 
 func _label(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new()
@@ -67,7 +91,7 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 	return l
 
 func _refresh() -> void:
-	coins_label.text = "Monedas: %d" % Game.coins
+	coins_label.text = "Dinero: $%d" % Game.coins
 	for id in rows.keys():
 		var info: Dictionary = Game.UPGRADES[id]
 		var lvl := Game.level(id)
@@ -80,9 +104,25 @@ func _refresh() -> void:
 		else:
 			btn.text = "Comprar  %d" % Game.cost(id)
 			btn.disabled = not Game.can_buy(id)
+	for id in item_rows.keys():
+		var info: Dictionary = Game.CONSUMABLES[id]
+		var have := Game.stock_of(id)
+		var mx := int(info["max"])
+		item_rows[id]["label"].text = "%s   [tienes %d/%d]\n%s" % [info["name"], have, mx, info["desc"]]
+		var btn: Button = item_rows[id]["button"]
+		if have >= mx:
+			btn.text = "LLENO"
+			btn.disabled = true
+		else:
+			btn.text = "Comprar  %d" % int(info["price"])
+			btn.disabled = not Game.can_buy_item(id)
 
 func _on_buy(id: String) -> void:
 	Game.buy(id)
+	_refresh()
+
+func _on_buy_item(id: String) -> void:
+	Game.buy_item(id)
 	_refresh()
 
 func _next_round() -> void:

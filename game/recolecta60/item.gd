@@ -28,6 +28,8 @@ func _draw() -> void:
 		return
 	ItemDB.draw_shape(self, data["shape"], data["color"], RADIUS)
 	draw_arc(Vector2.ZERO, RADIUS + 5.0, 0.0, TAU, 24, Color(1, 1, 1, 0.45), 2.0)
+	if int(data["points"]) >= 8:   # legendario: halo dorado
+		draw_arc(Vector2.ZERO, RADIUS + 12.0, 0.0, TAU, 32, Color(1.0, 0.95, 0.5, 0.4), 4.0)
 	if highlighted:
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 150.0)
 		draw_arc(Vector2.ZERO, RADIUS + 9.0 + pulse * 4.0, 0.0, TAU, 32, Color(1.0, 0.82, 0.15, 0.95), 3.0)
