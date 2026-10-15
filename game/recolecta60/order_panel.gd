@@ -1,9 +1,10 @@
 extends Node2D
-# Panel del HUD que muestra el pedido actual del vórtice (3 objetos).
+# Panel del HUD "CAPRICHOS DE HOY": icono + nombre + marca verde al entregar. Esquina inferior izquierda.
 
 const ItemDB = preload("res://item_database.gd")
-const W := 320.0
-const H := 150.0
+const UI = preload("res://ui.gd")
+const W := 288.0
+const H := 208.0
 
 var slots: Array = []
 
@@ -12,20 +13,26 @@ func set_order(new_slots: Array) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	var font := ThemeDB.fallback_font
-	var gold := Color(1.0, 0.82, 0.15)
-	draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.55))
-	draw_rect(Rect2(0, 0, W, H), gold, false, 2.0)
-	draw_string(font, Vector2(14, 28), "CAPRICHOS DE HOY", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, gold)
+	var font := UI.font()
+	draw_style_box(UI.panel_style(), Rect2(0, 0, W, H))
+	draw_string(font, Vector2(16, 38), "CAPRICHOS DE HOY", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, UI.YELLOW)
 	for i in slots.size():
 		var s = slots[i]
 		var item: Dictionary = s["item"]
 		var done: bool = s["done"]
-		var y := 66.0 + i * 36.0
-		var a := 0.35 if done else 1.0
-		ItemDB.draw_item(self, item, 11.0, Vector2(28, y - 6.0), 0.0, a)
-		draw_string(font, Vector2(52, y), item["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 1, 1, a))
+		var y := 52.0 + float(i) * 50.0
+		var a := 0.4 if done else 1.0
+		# icono de la cosa
+		draw_style_box(UI.panel_style(Color(0.05, 0.03, 0.03, 0.9), Color(UI.YELLOW, a), 8, 3, false, 0), Rect2(16, y, 40, 40))
+		ItemDB.draw_item(self, item, 9.5, Vector2(36, y + 20), 0.0, a)
+		# nombre (se achica si no cabe)
+		var fs := 18
+		while fs > 12 and font.get_string_size(item["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > 158.0:
+			fs -= 1
+		draw_string(font, Vector2(64, y + 27), item["name"], HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, a))
+		# casilla de entregado
+		var box_col := UI.GREEN if done else UI.GRAY.darkened(0.5)
+		draw_style_box(UI.panel_style(Color(0.05, 0.03, 0.03, 0.9), box_col, 8, 3, false, 0), Rect2(232, y, 40, 40))
 		if done:
-			var green := Color(0.3, 0.95, 0.4)
-			draw_line(Vector2(270, y - 8), Vector2(279, y), green, 4.0)
-			draw_line(Vector2(279, y), Vector2(296, y - 18), green, 4.0)
+			draw_line(Vector2(241, y + 21), Vector2(250, y + 30), UI.GREEN, 5.0)
+			draw_line(Vector2(250, y + 30), Vector2(264, y + 11), UI.GREEN, 5.0)

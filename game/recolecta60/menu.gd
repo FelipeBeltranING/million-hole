@@ -1,21 +1,43 @@
 extends Control
 # Menu principal.
 
+const UI = preload("res://ui.gd")
+const Assets = preload("res://assets.gd")
+
 const MAIN_SCENE := "res://main.tscn"
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.09, 0.12)
-	add_child(bg)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# fondo de inicio: assets/bg_menu.* o assets/fondo.jpg; si no hay, color liso
+	var bg_tex := Assets.background("menu")
+	if bg_tex != null:
+		var bg_img := TextureRect.new()
+		bg_img.texture = bg_tex
+		bg_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		add_child(bg_img)
+		bg_img.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	else:
+		var bg := ColorRect.new()
+		bg.color = Color(0.08, 0.09, 0.12)
+		add_child(bg)
+		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# panel oscuro centrado (para que el texto se lea sobre el fondo)
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.add_theme_stylebox_override("panel", UI.panel_style(Color(0.10, 0.06, 0.05, 0.90), UI.YELLOW, 20, 6, true, 28))
+	add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.position = Vector2(340, 130)
-	box.custom_minimum_size = Vector2(600, 0)
+	box.custom_minimum_size = Vector2(640, 0)
 	box.add_theme_constant_override("separation", 16)
-	add_child(box)
+	panel.add_child(box)
 
-	box.add_child(_label(Game.TITLE, 48, Color(1.0, 0.82, 0.15)))
+	var title := UI.label(Game.TITLE, 48, UI.YELLOW, 8)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
 	box.add_child(_label(Game.SUBTITLE, 20, Color(0.8, 0.8, 0.85)))
 	if Game.best_round_score > 0:
 		box.add_child(_label("Mejor ronda de esta sesion: %d puntos (ronda %d)" % [Game.best_round_score, Game.best_round_no], 22, Color(0.3, 0.9, 0.95)))

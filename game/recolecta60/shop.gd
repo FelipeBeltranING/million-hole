@@ -1,166 +1,326 @@
 extends Control
-# Boutique entre rondas: 5 ofertas al azar (mejoras, reliquias, consumibles). No alcanza para todo: hay que elegir.
-# Se pueden renovar las ofertas pagando (cada renovacion cuesta mas). Los precios suben con la ronda.
+# BOUTIQUE (diseño del mockup de Figma "BOUTIQUE", estilo de la heredera: ui.gd).
+# 5 ofertas al azar (mejoras, reliquias, consumibles): no alcanza para todo, hay que elegir.
+# Se pueden renovar pagando (cada renovacion cuesta mas). Los precios suben con la ronda.
+# Iconos opcionales: upgrade_<id>.png (mejoras; el bolsazo usa tool_bolsazo.png), relic_<id>.png, tool_<id>.png (consumibles).
+
+const UI = preload("res://ui.gd")
+const IconBox = preload("res://icon_box.gd")
 
 const MAIN_SCENE := "res://main.tscn"
 const CONTRACT_SCENE := "res://contract.tscn"
 const MENU_SCENE := "res://menu.tscn"
 
-const KIND_TAGS := {"upgrade": "MEJORA", "relic": "RELIQUIA", "consumable": "CONSUMIBLE"}
-const KIND_COLORS := {
-	"upgrade": Color(1, 1, 1),
-	"relic": Color(1.0, 0.82, 0.15),
-	"consumable": Color(0.6, 0.9, 1.0),
-}
+const BG := Color("18181B")        # fondo (zinc-900)
+const CARD := Color("1F2937")      # tarjetas y paneles (gray-800)
+const DARK := Color("09090B")      # botones oscuros (zinc-950)
+const DISABLED := Color("374151")  # botones que no se pueden usar (gray-700)
+const CARD_SIZE := Vector2(288, 208)
 
-var coins_label: Label
-var offers_box: VBoxContainer
+const KIND_TAGS := {"upgrade": "MEJORA", "relic": "RELIQUIA", "consumable": "CONSUMIBLE"}
+const KIND_COLORS := {"upgrade": Color.WHITE, "relic": UI.YELLOW, "consumable": UI.CYAN}
+
+var money_label: Label
+var grid: GridContainer
 var reroll_button: Button
-var relics_label: Label
-var stock_label: Label
+var relics_row: HBoxContainer
+var stock_row: HBoxContainer
 
 func _ready() -> void:
 	Game.new_shop()
+	var next_r := Game.round_number + 1
+
 	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.09, 0.12)
+	bg.color = BG
 	add_child(bg)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# Cabecera (ancho completo, centrada)
+	# --- Titulo (arriba izquierda)
 	var head := VBoxContainer.new()
-	head.position = Vector2(0, 12)
-	head.custom_minimum_size = Vector2(1280, 0)
-	head.add_theme_constant_override("separation", 4)
+	head.position = Vector2(32, 18)
+	head.custom_minimum_size = Vector2(884, 0)
+	head.add_theme_constant_override("separation", 0)
+	head.add_child(UI.label("BOUTIQUE", 48, UI.YELLOW, 8))
+	head.add_child(UI.label("Ronda %d superada - %d puntos | Próxima cuota: %d" % [
+		Game.round_number, Game.last_round_score, Game.quota_estimate(next_r)], 28, Color.WHITE, 4))
 	add_child(head)
-	head.add_child(_label("BOUTIQUE", 44, Color(1.0, 0.82, 0.15)))
-	var next_r := Game.round_number + 1
-	head.add_child(_label("Ronda %d superada  -  %d puntos   |   Proxima cuota: %d" % [
-		Game.round_number, Game.last_round_score, Game.quota_estimate(next_r)], 20, Color(0.8, 0.8, 0.85)))
+
+	# --- Dinero (arriba derecha)
+	var money_panel := PanelContainer.new()
+	money_panel.position = Vector2(940, 24)
+	money_panel.custom_minimum_size = Vector2(320, 80)
+	money_panel.add_theme_stylebox_override("panel", UI.panel_style(CARD, UI.YELLOW, 14, 3, false, 16))
+	money_label = UI.label("", 38, UI.YELLOW, 4)
+	money_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	money_panel.add_child(money_label)
+	add_child(money_panel)
+
+	# --- Aviso de gala con jefe
 	if Game.is_boss_round(next_r):
-		head.add_child(_label("¡LA PROXIMA RONDA ES UNA GALA CON JEFE!  (derrota al Paparazzi Supremo)", 20, Color(1.0, 0.4, 0.45)))
-	else:
-		head.add_child(_label("Los precios suben %d%% por ronda   |   Esta boutique solo ofrece 5 cosas: elige bien" % int(Game.PRICE_ROUND_GROWTH * 100.0), 16, Color(0.7, 0.7, 0.75)))
-	coins_label = _label("", 28, Color(1.0, 0.82, 0.15))
-	head.add_child(coins_label)
+		var banner := PanelContainer.new()
+		banner.position = Vector2(32, 120)
+		banner.custom_minimum_size = Vector2(1216, 44)
+		banner.add_theme_stylebox_override("panel", UI.panel_style(Color(UI.RED.r, UI.RED.g, UI.RED.b, 0.12), UI.RED, 12, 3, false, 6))
+		var brow := HBoxContainer.new()
+		brow.add_child(UI.label("¡LA PRÓXIMA RONDA ES UNA GALA CON JEFE!", 28, UI.RED, 3))
+		var bsp := Control.new()
+		bsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		brow.add_child(bsp)
+		brow.add_child(UI.label("Prepárate para los flashes.", 18, UI.RED, 0))
+		banner.add_child(brow)
+		add_child(banner)
 
-	# Columna izquierda: ofertas
-	var left := VBoxContainer.new()
-	left.position = Vector2(40, 160)
-	left.custom_minimum_size = Vector2(720, 0)
-	left.add_theme_constant_override("separation", 8)
-	add_child(left)
-	left.add_child(_label("OFERTAS DEL DIA", 22, Color(0.3, 0.9, 0.95)))
-	offers_box = VBoxContainer.new()
-	offers_box.add_theme_constant_override("separation", 8)
-	left.add_child(offers_box)
+	# --- Ofertas (cuadricula de 3 columnas)
+	grid = GridContainer.new()
+	grid.columns = 3
+	grid.position = Vector2(32, 182)
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
+	add_child(grid)
 
-	# Columna derecha: botones + lo que tienes
-	var right := VBoxContainer.new()
-	right.position = Vector2(800, 160)
-	right.custom_minimum_size = Vector2(440, 0)
-	right.add_theme_constant_override("separation", 8)
-	add_child(right)
+	# --- Panel de la derecha
+	var side := PanelContainer.new()
+	side.position = Vector2(940, 182)
+	side.custom_minimum_size = Vector2(320, 384)
+	side.add_theme_stylebox_override("panel", UI.panel_style(CARD, UI.YELLOW, 14, 3, false, 20))
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 14)
+	side.add_child(col)
+	col.add_child(UI.label("¿Lista para más?", 30, UI.YELLOW, 3))
+	var blurb := UI.label("Compra algo bonito. Después, tíralo al vórtice.", 18, Color.WHITE, 0)
+	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	blurb.custom_minimum_size = Vector2(0, 48)
+	col.add_child(blurb)
 
 	reroll_button = Button.new()
-	reroll_button.custom_minimum_size = Vector2(0, 46)
-	reroll_button.focus_mode = Control.FOCUS_NONE
-	reroll_button.add_theme_font_size_override("font_size", 19)
+	reroll_button.custom_minimum_size = Vector2(0, 56)
+	reroll_button.add_theme_font_size_override("font_size", 24)
+	_style_button(reroll_button, DARK, Color("27272A"), UI.YELLOW, UI.YELLOW)
 	reroll_button.pressed.connect(_on_reroll)
-	right.add_child(reroll_button)
+	col.add_child(reroll_button)
 
+	var nextcol := VBoxContainer.new()
+	nextcol.add_theme_constant_override("separation", 6)
 	var next := Button.new()
-	next.text = "Siguiente ronda  (Enter)"
-	next.custom_minimum_size = Vector2(0, 52)
-	next.focus_mode = Control.FOCUS_NONE
-	next.add_theme_font_size_override("font_size", 22)
+	next.text = "Siguiente ronda"
+	next.custom_minimum_size = Vector2(0, 64)
+	next.add_theme_font_size_override("font_size", 30)
+	_style_button(next, UI.YELLOW, UI.YELLOW.lightened(0.25), UI.YELLOW, UI.INK)
 	next.pressed.connect(_next_round)
-	right.add_child(next)
+	nextcol.add_child(next)
+	var enter_hint := UI.label("Enter para continuar", 18, UI.YELLOW, 0)
+	enter_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nextcol.add_child(enter_hint)
+	col.add_child(nextcol)
 
 	var quit := Button.new()
-	quit.text = "Terminar partida y volver al menu  (Esc)"
-	quit.custom_minimum_size = Vector2(0, 38)
-	quit.focus_mode = Control.FOCUS_NONE
-	quit.add_theme_font_size_override("font_size", 15)
+	quit.text = "Terminar partida (Esc)"
+	quit.custom_minimum_size = Vector2(0, 44)
+	quit.add_theme_font_size_override("font_size", 18)
+	_style_button(quit, DARK, Color("27272A"), UI.GRAY, UI.GRAY)
 	quit.pressed.connect(_quit_run)
-	right.add_child(quit)
+	col.add_child(quit)
+	add_child(side)
 
-	right.add_child(_label(" ", 8, Color(1, 1, 1)))
-	right.add_child(_label("TUS RELIQUIAS", 20, Color(1.0, 0.82, 0.15)))
-	relics_label = Label.new()
-	relics_label.custom_minimum_size = Vector2(440, 0)
-	relics_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	relics_label.add_theme_font_size_override("font_size", 14)
-	right.add_child(relics_label)
-	stock_label = Label.new()
-	stock_label.custom_minimum_size = Vector2(440, 0)
-	stock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stock_label.add_theme_font_size_override("font_size", 16)
-	stock_label.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0))
-	right.add_child(stock_label)
+	# --- Abajo: reliquias y consumibles que tienes
+	var have := HBoxContainer.new()
+	have.position = Vector2(32, 636)
+	have.custom_minimum_size = Vector2(884, 64)
+	have.add_theme_constant_override("separation", 24)
+	var rcol := VBoxContainer.new()
+	rcol.custom_minimum_size = Vector2(488, 0)
+	rcol.add_theme_constant_override("separation", 4)
+	rcol.add_child(UI.label("TUS RELIQUIAS", 18, UI.YELLOW, 2))
+	relics_row = HBoxContainer.new()
+	relics_row.add_theme_constant_override("separation", 12)
+	rcol.add_child(relics_row)
+	have.add_child(rcol)
+	var ccol := VBoxContainer.new()
+	ccol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ccol.add_theme_constant_override("separation", 4)
+	ccol.add_child(UI.label("CONSUMIBLES", 18, UI.CYAN, 2))
+	stock_row = HBoxContainer.new()
+	stock_row.add_theme_constant_override("separation", 16)
+	ccol.add_child(stock_row)
+	have.add_child(ccol)
+	add_child(have)
+
+	# --- Titulo del juego (abajo derecha)
+	var title := UI.label(Game.TITLE, 20, UI.YELLOW, 4)
+	title.position = Vector2(940, 667)
+	add_child(title)
 
 	_refresh()
 
-func _label(text: String, font_size: int, color: Color) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", font_size)
-	l.add_theme_color_override("font_color", color)
-	return l
+# ---------------------------------------------------------------- Construccion
+
+# Estilo de boton: normal / hover / pressed / desactivado (todo con la fuente del juego)
+func _style_button(btn: Button, fill: Color, hover: Color, border: Color, txt: Color,
+		dis_fill: Color = DISABLED, dis_border: Color = DISABLED, dis_txt: Color = UI.GRAY) -> void:
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_override("font", UI.font())
+	btn.add_theme_stylebox_override("normal", UI.panel_style(fill, border, 12, 3, false, 6))
+	btn.add_theme_stylebox_override("hover", UI.panel_style(hover, border, 12, 3, false, 6))
+	btn.add_theme_stylebox_override("pressed", UI.panel_style(hover, border, 12, 3, false, 6))
+	btn.add_theme_stylebox_override("disabled", UI.panel_style(dis_fill, dis_border, 12, 3, false, 6))
+	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		btn.add_theme_color_override(key, txt)
+	btn.add_theme_color_override("font_disabled_color", dis_txt)
+
+func _icon_key(o: Dictionary) -> String:
+	match o["kind"]:
+		"upgrade":
+			return "tool_bolsazo" if o["id"] == "bolsazo" else "upgrade_" + String(o["id"])
+		"relic":
+			return "relic_" + String(o["id"])
+	return "tool_" + String(o["id"])
+
+func _make_card(i: int) -> PanelContainer:
+	var o: Dictionary = Game.shop_offers[i]
+	var kind: String = o["kind"]
+	var accent: Color = KIND_COLORS[kind]
+	var name_text: String = Game.offer_name(o)
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = CARD_SIZE
+	card.add_theme_stylebox_override("panel", UI.panel_style(CARD, UI.YELLOW, 14, 3, false, 12))
+	if o["sold"]:
+		card.modulate.a = 0.4
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	card.add_child(col)
+
+	# fila 1: tipo + nivel
+	var top := HBoxContainer.new()
+	top.add_child(UI.label(KIND_TAGS[kind], 20, accent, 2))
+	var sp := Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(sp)
+	if kind == "upgrade":
+		top.add_child(UI.label("Nivel %d/%d" % [Game.level(o["id"]), int(Game.UPGRADES[o["id"]]["max"])], 26, UI.YELLOW, 3))
+	col.add_child(top)
+
+	# fila 2: icono + nombre y descripcion
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	var icon := IconBox.new(96.0)
+	icon.show_icon(_icon_key(o), name_text.substr(0, 1).to_upper(), accent)
+	body.add_child(icon)
+	var texts := VBoxContainer.new()
+	texts.add_theme_constant_override("separation", 2)
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.custom_minimum_size = Vector2(120, 96)
+	texts.clip_contents = true
+	var nm := UI.label(name_text, 22, Color.WHITE, 2)
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nm.max_lines_visible = 2
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(nm)
+	var ds := UI.label(Game.offer_desc(o), 15, UI.GRAY, 0)
+	ds.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ds.max_lines_visible = 3
+	ds.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(ds)
+	body.add_child(texts)
+	col.add_child(body)
+
+	# fila 3: boton
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.add_theme_font_size_override("font_size", 24)
+	_style_button(btn, UI.YELLOW, UI.YELLOW.lightened(0.25), UI.YELLOW, UI.INK)
+	if o["sold"]:
+		btn.text = "VENDIDO"
+		btn.disabled = true
+	elif not Game.offer_available(o):
+		btn.text = "MÁXIMO" if kind == "upgrade" else "LLENO"
+		btn.disabled = true
+	else:
+		btn.text = "GRATIS" if o.get("free", false) else "Comprar %d" % Game.offer_price(o)
+		btn.disabled = not Game.can_buy_offer(i)
+	btn.pressed.connect(_on_buy.bind(i))
+	col.add_child(btn)
+	return card
+
+func _make_info_block() -> Control:
+	var m := MarginContainer.new()
+	m.custom_minimum_size = CARD_SIZE
+	m.add_theme_constant_override("margin_left", 20)
+	m.add_theme_constant_override("margin_right", 20)
+	var v := VBoxContainer.new()
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_theme_constant_override("separation", 12)
+	var t := UI.label("El lujo tiene límites.", 30, UI.YELLOW, 3)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(t)
+	var d := UI.label("Las mejoras se acumulan. Las reliquias son únicas. Los consumibles tienen capacidad limitada.", 18, UI.GRAY, 0)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(d)
+	m.add_child(v)
+	return m
+
+func _make_relic_chip(id: String, with_name: bool) -> Control:
+	var info: Dictionary = Game.RELICS[id]
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(0, 44)
+	chip.add_theme_stylebox_override("panel", UI.panel_style(CARD, CARD, 10, 0, false, 4))
+	chip.tooltip_text = "%s: %s" % [info["name"], info["desc"]]
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	var icon := IconBox.new(36.0)
+	icon.show_icon("relic_" + id, String(info["name"]).substr(0, 1).to_upper(), UI.YELLOW)
+	h.add_child(icon)
+	if with_name:
+		var l := UI.label(info["name"], 18, Color.WHITE, 0)
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		h.add_child(l)
+	chip.add_child(h)
+	return chip
+
+# ---------------------------------------------------------------- Refresco
+
+func _clear(node: Node) -> void:
+	for child in node.get_children():
+		child.queue_free()
 
 func _refresh() -> void:
-	coins_label.text = "Dinero: $%d" % Game.coins
+	money_label.text = "Dinero: $%d" % Game.coins
 
-	# ofertas (se reconstruyen cada vez)
-	for child in offers_box.get_children():
-		child.queue_free()
+	_clear(grid)
 	for i in Game.shop_offers.size():
-		var o: Dictionary = Game.shop_offers[i]
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 12)
-		var lbl := Label.new()
-		lbl.custom_minimum_size = Vector2(520, 0)
-		lbl.add_theme_font_size_override("font_size", 17)
-		lbl.add_theme_color_override("font_color", KIND_COLORS[o["kind"]])
-		var tag: String = KIND_TAGS[o["kind"]]
-		if o["kind"] == "upgrade":
-			tag += " %d/%d" % [Game.level(o["id"]), int(Game.UPGRADES[o["id"]]["max"])]
-		lbl.text = "[%s]  %s\n%s" % [tag, Game.offer_name(o), Game.offer_desc(o)]
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(170, 52)
-		btn.focus_mode = Control.FOCUS_NONE
-		btn.add_theme_font_size_override("font_size", 18)
-		if o["sold"]:
-			btn.text = "VENDIDO"
-			btn.disabled = true
-			lbl.modulate.a = 0.4
-		elif not Game.offer_available(o):
-			btn.text = "LLENO"
-			btn.disabled = true
-			lbl.modulate.a = 0.4
-		else:
-			btn.text = "GRATIS" if o.get("free", false) else "Comprar  %d" % Game.offer_price(o)
-			btn.disabled = not Game.can_buy_offer(i)
-		btn.pressed.connect(_on_buy.bind(i))
-		row.add_child(lbl)
-		row.add_child(btn)
-		offers_box.add_child(row)
+		grid.add_child(_make_card(i))
+	grid.add_child(_make_info_block())
 
-	reroll_button.text = "Renovar ofertas  (%d)" % Game.reroll_cost()
-	reroll_button.disabled = Game.coins < Game.reroll_cost()
+	var cost := Game.reroll_cost()
+	reroll_button.text = "Renovar ofertas (%d)" % cost
+	reroll_button.disabled = Game.coins < cost
 
-	# lo que tienes
+	# reliquias que tienes (con mas de 2, solo iconos; el nombre sale al pasar el mouse)
+	_clear(relics_row)
 	if Game.relics.is_empty():
-		relics_label.text = "Ninguna todavia"
+		relics_row.add_child(UI.label("Ninguna todavía", 18, UI.GRAY, 0))
 	else:
-		var lines := PackedStringArray()
 		for id in Game.relics:
-			lines.append("- %s: %s" % [Game.RELICS[id]["name"], Game.RELICS[id]["desc"]])
-		relics_label.text = "\n".join(lines)
-	var st := PackedStringArray()
+			relics_row.add_child(_make_relic_chip(id, Game.relics.size() <= 2))
+
+	# consumibles que tienes
+	_clear(stock_row)
+	var shown := 0
 	for id in Game.CONSUMABLES.keys():
-		st.append("%s x%d" % [Game.CONSUMABLES[id]["name"], Game.stock_of(id)])
-	stock_label.text = "Consumibles: " + "  |  ".join(st)
+		var n := Game.stock_of(id)
+		if n > 0:
+			shown += 1
+	var fsize := 30 if shown <= 2 else 24
+	for id in Game.CONSUMABLES.keys():
+		var n := Game.stock_of(id)
+		if n > 0:
+			var short_name: String = String(Game.CONSUMABLES[id]["name"]).split(" ")[0]
+			stock_row.add_child(UI.label("%s x%d" % [short_name, n], fsize, UI.CYAN, 3))
+	if shown == 0:
+		stock_row.add_child(UI.label("Ninguno", 18, UI.GRAY, 0))
+
+# ---------------------------------------------------------------- Acciones
 
 func _on_buy(i: int) -> void:
 	Game.buy_offer(i)

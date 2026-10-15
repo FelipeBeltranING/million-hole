@@ -30,10 +30,20 @@ static func tex(key: String) -> Texture2D:
 	if _cache.has(key):
 		return _cache[key]
 	var t: Texture2D = null
-	var path := DIR + key + ".png"
-	if ResourceLoader.exists(path):
-		t = load(path)
+	for ext in [".png", ".jpg"]:   # acepta PNG o JPG
+		var path: String = DIR + key + String(ext)
+		if ResourceLoader.exists(path):
+			t = load(path)
+			break
 	_cache[key] = t
+	return t
+
+# Fondo de una pantalla: kind = "menu" (inicio) o "gameover" (fin de partida).
+# Busca bg_<kind>.png/.jpg; si no existe usa fondo.png/.jpg; si tampoco, devuelve null (queda el color liso).
+static func background(kind: String) -> Texture2D:
+	var t := tex("bg_" + kind)
+	if t == null:
+		t = tex("fondo")
 	return t
 
 static func has(key: String) -> bool:

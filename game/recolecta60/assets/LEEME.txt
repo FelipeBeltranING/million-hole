@@ -37,3 +37,49 @@ OBLIGATORIOS (25: 13 generales + 12 cosas de lujo)
 
 OPCIONAL
  boss_rage.png         jefe furioso (si no existe se usa boss.png con tinte rojo)
+
+ICONOS DEL HUD (OPCIONALES, PNG cuadrado ~128 px, se muestran en cuadritos de 38-48 px)
+ Si no existen, el cuadrito muestra una letra provisional.
+ icon_time.png         reloj (barra superior)
+ icon_money.png        dinero (barra superior)
+ tool_bolsazo.png      icono del Bolsazo
+ tool_turbo.png        icono del Turbo
+ tool_flash.png        icono del Flash
+ tool_shield.png       icono del Escudo
+ relic_greed.png           Collar de la codicia
+ relic_combo_ring.png      Anillo del combo
+ relic_shades.png          Gafas oscuras
+ relic_blank_check.png     Cheque en blanco
+ relic_tiara.png           Tiara de la reina
+ relic_perfume.png         Perfume carisimo
+ relic_glass_shoes.png     Zapatos de cristal
+ relic_golden_watch.png    Reloj de oro macizo
+
+ICONOS DE CONTRATOS (OPCIONALES, PNG cuadrado ~128 px, se muestran en la tarjeta de 96 px de la pantalla de contrato)
+ Si no existen, el cuadro muestra una letra provisional.
+ contract_calm.png       Ronda tranquila
+ contract_double.png     Doble o nada
+ contract_rush.png       Prisa de compras
+ contract_vip.png        Paparazzi VIP
+ contract_high.png       Cuota de lujo
+ contract_slippery.png   Piso de champan
+
+ICONOS DE MEJORAS DE LA BOUTIQUE (OPCIONALES, PNG cuadrado ~128 px, se muestran en tarjetas de 96 px)
+ Si no existen, el cuadro muestra la letra inicial. Las reliquias usan relic_<id>.png y los consumibles tool_<id>.png (ya listados arriba).
+ El Bolsazo reutiliza tool_bolsazo.png.
+ upgrade_boots.png        Zapatillas de diseñador
+ upgrade_backpack.png     Bolso de marca
+ upgrade_magnet.png       Imán de billetes
+ upgrade_durable.png      Dinero duradero
+ upgrade_combo.png        Racha de caprichos
+ upgrade_pocket.png       Reloj de pulsera
+ upgrade_reach.png        Manos largas
+ upgrade_pitwide.png      Vórtice grande
+ upgrade_luck.png         Suerte de heredera
+ upgrade_orderbonus.png   Bonus de capricho
+
+FONDOS DE PANTALLA (OPCIONALES; PNG o JPG, 1280x720 o 1600x900, se ajusta solo)
+ fondo.jpg        fondo para el MENU (inicio) y para FIN DE LA PARTIDA (ya incluido)
+ bg_menu.png      (opcional) fondo solo del menu: si existe, se usa en vez de fondo.*
+ bg_gameover.png  (opcional) fondo solo del fin de partida: si existe, se usa en vez de fondo.*
+ En la partida NO se usa ningun fondo de estos (ahi sigue background.png / el color del mapa).

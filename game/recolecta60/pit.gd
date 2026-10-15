@@ -18,6 +18,7 @@ const MIN_JUMP := 320.0
 
 @export var radius := 70.0
 var map_rect := Rect2()
+var avoid_zones: Array = []   # rectangulos del HUD donde no debe aparecer el vortice
 var mode := "static"
 var interval := 14.0
 var move_speed := 55.0
@@ -120,6 +121,9 @@ func _safe_spot(min_from_here: float, far: bool) -> Vector2:
 				var gap: float = p.distance_to(h.position) - (radius + h.radius + 25.0)
 				if gap < 0.0:
 					score += gap * 2.0
+		for z in avoid_zones:
+			if z.grow(radius).has_point(p):
+				score -= 300.0
 		score += randf() * 20.0
 		if score > best_score:
 			best_score = score

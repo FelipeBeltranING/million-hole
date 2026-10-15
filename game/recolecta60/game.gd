@@ -2,7 +2,7 @@ extends Node
 # AUTOLOAD "Game": estado de la partida actual (solo en memoria, sin guardado en disco).
 # Al cerrar el juego todo se pierde. "Terminar partida" o "Jugar" llaman a reset_run().
 
-const BASE_TIME := 30.0
+const BASE_TIME := 30.0   # <<< TIEMPO DE UNA RONDA NORMAL (segundos), igual en todas las rondas. Contratos, reliquias y mejoras lo cambian encima.
 
 # ------------------------------------------------------------------ Mejoras permanentes (con niveles)
 # precio = base_cost * 1.5^nivel_actual * multiplicador de ronda (ver price_mult)
@@ -41,17 +41,17 @@ const RELICS = {
 
 # ------------------------------------------------------------------ Contratos de riesgo (se elige uno antes de cada ronda)
 const CONTRACTS = {
-	"calm":     {"name": "Ronda tranquila",  "desc": "Sin cambios. La opcion segura."},
+	"calm":     {"name": "Ronda tranquila",  "desc": "Sin cambios. La opción segura.", "risk": 0},
 	"double":   {"name": "Doble o nada",     "desc": "Peligros x2, +1 paparazzi, cuota +30%.\nDinero x2.",
-				 "hazard_mult": 2.0, "extra_pap": 1, "quota_mult": 1.3, "money_mult": 2.0},
+				 "hazard_mult": 2.0, "extra_pap": 1, "quota_mult": 1.3, "money_mult": 2.0, "risk": 2},
 	"rush":     {"name": "Prisa de compras", "desc": "10 s menos de tiempo.\nPuntos +30%, dinero x1.5.",
-				 "time_add": -10.0, "score_mult": 1.3, "money_mult": 1.5},
+				 "time_add": -10.0, "score_mult": 1.3, "money_mult": 1.5, "risk": 1},
 	"vip":      {"name": "Paparazzi VIP",    "desc": "+2 paparazzi.\nDinero x1.75.",
-				 "extra_pap": 2, "money_mult": 1.75},
+				 "extra_pap": 2, "money_mult": 1.75, "risk": 1},
 	"high":     {"name": "Cuota de lujo",    "desc": "Cuota +50%.\nDinero x2.5.",
-				 "quota_mult": 1.5, "money_mult": 2.5},
-	"slippery": {"name": "Piso de champan",  "desc": "Charcos y pinchos x3.\nDinero x1.5.",
-				 "hazard_mult": 3.0, "money_mult": 1.5},
+				 "quota_mult": 1.5, "money_mult": 2.5, "risk": 2},
+	"slippery": {"name": "Piso de champán",  "desc": "Charcos y pinchos x3.\nDinero x1.5.",
+				 "hazard_mult": 3.0, "money_mult": 1.5, "risk": 1},
 }
 
 const TITLE := "MILLONES AL AGUJERO"
@@ -70,7 +70,7 @@ const PAPARAZZI_MAX := 6
 
 # --- Jefe (ronda de gala) ---
 const BOSS_EVERY := 5              # rondas 5, 10, 15...
-const BOSS_EXTRA_TIME := 25.0   # el jefe es mas duro: mas tiempo
+const BOSS_EXTRA_TIME := 10.0   # <<< segundos EXTRA de la gala (jefe). Gala = BASE_TIME + esto = 30 + 10 = 40 s
 const BOSS_QUOTA_MULT := 0.8       # la cuota de la gala es mas baja (hay que derrotar al jefe)
 const BOSS_ORDER_SIZE := 2         # cada capricho completado en la gala hace 1 de dano al jefe
 
@@ -123,7 +123,11 @@ func has_relic(id: String) -> bool:
 	return relics.has(id)
 
 func cv(key: String, default_value: float) -> float:
-	return float(CONTRACTS[contract_id].get(key, default_value))
+	return contract_val(contract_id, key, default_value)
+
+# Valor de un contrato cualquiera (no solo el activo). La pantalla de contratos lo usa para las 3 tarjetas.
+func contract_val(id: String, key: String, default_value: float) -> float:
+	return float(CONTRACTS[id].get(key, default_value))
 
 # ------------------------------------------------------------------ Efectos (los consultan player.gd y main.gd)
 func speed_mult() -> float:
@@ -225,8 +229,10 @@ func pit_plan(r: int) -> Dictionary:
 		mode = options[randi() % options.size()]
 	return {"mode": mode, "interval": interval, "speed": speed}
 
-func round_time(r: int) -> float:
-	var t := BASE_TIME + start_time_bonus() + cv("time_add", 0.0)
+# Tiempo de la ronda r con el contrato cid (si no se pasa, el contrato activo)
+func round_time(r: int, cid: String = "") -> float:
+	var id := cid if cid != "" else contract_id
+	var t := BASE_TIME + start_time_bonus() + contract_val(id, "time_add", 0.0)
 	if is_boss_round(r):
 		t += BOSS_EXTRA_TIME
 	return maxf(t, 10.0)
@@ -243,14 +249,15 @@ func quota_estimate(r: int) -> int:
 		q *= BOSS_QUOTA_MULT
 	return roundi(q)
 
-# Cuota real de la ronda (incluye el contrato elegido)
-func current_quota(r: int) -> int:
+# Cuota real de la ronda (incluye el contrato elegido, o el cid que se pase)
+func current_quota(r: int, cid: String = "") -> int:
+	var id := cid if cid != "" else contract_id
 	var q := float(quota_for(r))
 	if has_relic("blank_check"):
 		q *= 1.25
 	if is_boss_round(r):
 		q *= BOSS_QUOTA_MULT
-	q *= cv("quota_mult", 1.0)
+	q *= contract_val(id, "quota_mult", 1.0)
 	return roundi(q)
 
 # Anota el resultado de la ronda actual. Devuelve true si es nuevo record de la sesion.

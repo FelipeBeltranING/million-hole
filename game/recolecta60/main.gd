@@ -13,8 +13,15 @@ const HazardScript = preload("res://hazard.gd")
 const Assets = preload("res://assets.gd")
 
 # --- Ronda ---
-const MAX_TIME := 60.0      # el reloj nunca pasa de esto (+15 en la gala)
-const MARGIN := 50.0
+const MAX_TIME := 60.0      # el reloj nunca pasa de esto al sumar bonus (relojes, pedidos); la ronda normal EMPIEZA en 30 (Game.BASE_TIME)
+# --- Colores del piso del mapa (cambialos aqui) ---
+const FLOOR_A := Color("2A2547")      # baldosa oscura
+const FLOOR_B := Color("332D57")      # baldosa clara (poca diferencia = se ve sutil)
+const FLOOR_TILE := 64.0              # tamaño de cada baldosa en px
+const FLOOR_OUTSIDE := Color("16132A")  # lo que queda detras del HUD, fuera del mapa
+const FLOOR_EDGE := Color(1.0, 0.82, 0.15, 0.55)   # linea dorada fina en el borde del mapa
+
+const MAP_RECT := Rect2(48, 100, 1184, 528)   # zona de juego (el HUD ocupa el resto)
 
 # --- Objetos en el mapa ---
 const ITEMS_ON_MAP := 18
@@ -86,13 +93,14 @@ func _ready() -> void:
 	max_time = maxf(MAX_TIME + (Game.BOSS_EXTRA_TIME if boss_round else 0.0), time_left)
 	quota = Game.current_quota(r)
 	var size := get_viewport_rect().size
-	map_rect = Rect2(Vector2(MARGIN, MARGIN), size - Vector2(MARGIN, MARGIN) * 2.0)
+	map_rect = MAP_RECT
 
 	pit = PitScript.new()
 	pit.radius = pit.radius * Game.pit_scale()
 	pit.position = size / 2.0
 	var pplan := Game.pit_plan(r)
 	pit.map_rect = map_rect
+	pit.avoid_zones = HudScript.ZONES
 	pit.mode = pplan["mode"]
 	pit.interval = pplan["interval"]
 	pit.move_speed = pplan["speed"]
@@ -138,9 +146,16 @@ func _random_pos(min_pit_dist: float) -> Vector2:
 		pos = Vector2(
 			randf_range(map_rect.position.x + 20.0, map_rect.end.x - 20.0),
 			randf_range(map_rect.position.y + 20.0, map_rect.end.y - 20.0))
-		if pos.distance_to(pit.position) > min_pit_dist:
+		if pos.distance_to(pit.position) > min_pit_dist and not _in_hud(pos):
 			break
 	return pos
+
+# true si el punto cae debajo de un panel del HUD
+func _in_hud(p: Vector2) -> bool:
+	for z in HudScript.ZONES:
+		if z.grow(18.0).has_point(p):
+			return true
+	return false
 
 func _spawn_item(data: Dictionary = {}, at = null) -> void:
 	var item = ItemScript.new()
@@ -361,6 +376,8 @@ func _hazard_pos(kind: String, placed: Array) -> Vector2:
 			ok = pos.distance_to(player.position) > 350.0
 		else:
 			ok = pos.distance_to(pit.position) > pit.radius + 90.0 and pos.distance_to(player.position) > 150.0
+		if _in_hud(pos):
+			ok = false
 		for q in placed:
 			if pos.distance_to(q) < 140.0:
 				ok = false
@@ -478,5 +495,12 @@ func _draw() -> void:
 	# con asset: res://assets/background.png (1280x720, cubre toda la pantalla)
 	if Assets.draw_fill(self, "background", Rect2(Vector2.ZERO, get_viewport_rect().size)):
 		return
-	draw_rect(map_rect, Color(0.16, 0.22, 0.16))
-	draw_rect(map_rect, Color(0.45, 0.35, 0.2), false, 4.0)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), FLOOR_OUTSIDE)
+	var cols := ceili(map_rect.size.x / FLOOR_TILE)
+	var rows := ceili(map_rect.size.y / FLOOR_TILE)
+	for cy in rows:
+		for cx in cols:
+			var tile := Rect2(map_rect.position + Vector2(cx, cy) * FLOOR_TILE, Vector2(FLOOR_TILE, FLOOR_TILE))
+			draw_rect(tile.intersection(map_rect), FLOOR_A if (cx + cy) % 2 == 0 else FLOOR_B)
+	draw_rect(map_rect.grow(3.0), Color(0.07, 0.05, 0.04), false, 6.0)
+	draw_rect(map_rect, FLOOR_EDGE, false, 2.0)

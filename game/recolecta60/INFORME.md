@@ -1,11 +1,11 @@
-# Millones al agujero — Informe de estado (tras FASE 5.2: más objetos en la gala + código listo para assets)
+# Millones al agujero — Informe de estado (tras FASE 5.7: piso del mapa nuevo; FASE 5.6: barra naranja + fondos de menú/fin de partida; FASE 5.5: boutique rediseñada + FASE 5.4: contratos rediseñados, ronda de 30 s y gala de 40 s)
 
 > Pega este archivo al inicio de un chat nuevo y di: "continuemos con la siguiente fase".
 
 ## Concepto
 Juego top-down 2D en **Godot 4.2+** (GDScript). Una **heredera mimada** (protagonista original, sin nombre; rosa con tiara)
 lleva **cosas de lujo** y las **tira en un agujero** que las convierte en **dinero** (billetes, monedas de oro, lingotes).
-Rondas de **30 s**, pedidos ("Caprichos de hoy"), relojes que suman tiempo, **cuota de puntos por ronda**, **peligros** desde la ronda 2,
+Rondas de **30 s** (40 s la gala del jefe), pedidos ("Caprichos de hoy"), relojes que suman tiempo, **cuota de puntos por ronda**, **peligros** desde la ronda 2,
 **boutique rotativa** con mejoras/reliquias/consumibles, **contratos de riesgo** antes de cada ronda y un **jefe cada 5 rondas** (la Gala).
 Estilo roguelike: no puedes comprarlo todo, hay que elegir.
 Todo dibujado por código (`_draw`), sin assets. **Sin persistencia por diseño:** al cerrar el juego se pierde todo.
@@ -111,7 +111,56 @@ Vida 3 (+1 por jefe, tope 6). Bolsazo/Flash no le afectan. La Gala dura +15 s, c
 **Superar la Gala exige cuota Y derrotar al jefe.** Premio: 40 piezas de dinero al derrotarlo + **una reliquia GRATIS** en la boutique siguiente (`free_relic_pending`).
 
 
-## FASE 5.2 (cambios nuevos, SIN probar en Godot)
+## FASE 5.7 (SIN probar en Godot)
+**Piso del mapa nuevo** (antes verde liso): piso de baldosas índigo estilo mármol de lujo, para que destaquen el oro, la heredera rosa y los pinchos rojos. En `main.gd`, arriba, constantes para cambiarlo: `FLOOR_A` / `FLOOR_B` (las 2 baldosas alternadas), `FLOOR_TILE` (tamaño, 64 px), `FLOOR_OUTSIDE` (lo que queda detrás del HUD) y `FLOOR_EDGE` (línea dorada fina del borde). Para un fondo liso: poner `FLOOR_A` y `FLOOR_B` iguales. Si existe `assets/background.png` sigue mandando ese. `project.godot`: color de limpieza ajustado a juego.
+**Archivos tocados:** `main.gd`, `project.godot`, `INFORME.md`.
+
+## FASE 5.6 (SIN probar en Godot)
+**1. Barra superior del HUD más naranja:** nueva constante `UI.ORANGE_SOFT = #FF8A1F` en `ui.gd`, usada solo por la barra de arriba (`hud.gd` → `_build_top_bar`). `UI.ORANGE` (#F04800, rojo-naranja) sigue para el combo. Para ajustar el tono: cambiar ese hex.
+**2. Fondos de pantalla** (`assets/fondo.jpg`, subido por el usuario, 1600x900):
+- `assets.gd`: ahora acepta **PNG o JPG**; nueva `Assets.background(kind)` busca `bg_<kind>` y, si no existe, `fondo` (si tampoco, null = color liso).
+- **Menú** (`menu.gd`): usa `Assets.background("menu")` a pantalla completa + **panel oscuro centrado** con borde amarillo para que el texto se lea sobre el fondo naranja. Título con `UI.label`.
+- **Fin de la partida** (`hud.gd` → `show_round_result`): si `passed` es false (perdiste), muestra `Assets.background("gameover")` en vez de la partida oscurecida (`end_bg`). **"RONDA N SUPERADA" NO lleva fondo** (sigue el oscurecido); si se quiere, quitar la condición `not info["passed"]`.
+- Fondos distintos por pantalla: poner `bg_menu.png` y/o `bg_gameover.png` en `assets/` (tienen prioridad sobre `fondo.jpg`). En la partida normal no se usa ninguno.
+**Archivos tocados:** `ui.gd`, `hud.gd`, `assets.gd`, `menu.gd`, `assets/LEEME.txt`, `assets/fondo.jpg` (nuevo), `INFORME.md`.
+**Al probar:** que Godot importe `fondo.jpg` (abre el proyecto en el editor una vez), que el menú se lea bien sobre el fondo, y que el fin de partida se vea bien con el panel encima.
+
+## FASE 5.5 (SIN probar en Godot)
+**Boutique rediseñada** (`shop.gd`, reescrito desde el mockup de Figma "BOUTIQUE"; `shop.tscn` no cambió; misma lógica de compra/renovar/siguiente ronda de siempre, solo cambió lo visual). Estilo de `ui.gd` (Lilita One, amarillo/cian, bordes gruesos), posiciones absolutas en 1280x720:
+- **Arriba izquierda:** "BOUTIQUE" y "Ronda N superada - X puntos | Próxima cuota: Y". **Arriba derecha:** panel "Dinero: $N".
+- **Aviso rojo "¡LA PRÓXIMA RONDA ES UNA GALA CON JEFE!"** (solo si la ronda siguiente es la gala).
+- **Ofertas:** cuadrícula de 3 columnas de tarjetas 288x208. Cada tarjeta: tipo (MEJORA blanco / RELIQUIA amarillo / CONSUMIBLE cian), `Nivel a/max` (solo mejoras), **icono 96 px** (`icon_box.gd`) + nombre + descripción, y botón: `Comprar N` / `GRATIS` (amarillo), gris si no te alcanza, `VENDIDO` (tarjeta al 40%), `MÁXIMO` (mejora al tope) o `LLENO` (consumible). Si el nombre/descripción no cabe se corta con "…" (nombre 2 líneas, descripción 3). El hueco 6 de la cuadrícula es el texto "El lujo tiene límites."
+- **Panel derecho** "¿Lista para más?": `Renovar ofertas (N)` (gris si no alcanza), `Siguiente ronda` + "Enter para continuar", `Terminar partida (Esc)`. Mismas teclas: Enter / Esc.
+- **Abajo:** "TUS RELIQUIAS" (chips con icono; si tienes más de 2 solo iconos y el nombre/efecto sale al pasar el mouse) y "CONSUMIBLES" (Turbo x2, Flash x1... solo los que tienes). Abajo a la derecha el título del juego.
+- Ya no está la lista de texto de reliquias con descripción: ahora es por tooltip.
+- **Iconos opcionales:** `upgrade_<id>.png` (boots, backpack, magnet, durable, combo, pocket, reach, pitwide, luck, orderbonus; el bolsazo usa `tool_bolsazo.png`), `relic_<id>.png`, `tool_<id>.png`. Sin PNG sale la letra inicial. Añadidos a `assets/LEEME.txt`.
+**Archivos tocados:** `shop.gd`, `assets/LEEME.txt`, `INFORME.md`.
+**Pendiente (mockups ya recibidos):** "RONDA N SUPERADA" y "FIN DE LA PARTIDA" (están dentro de `hud.gd` → `show_round_result`) y el menú.
+**Al probar:** que ningún texto se corte feo en las tarjetas (si molesta, bajar la letra de la descripción o agrandar la tarjeta: `CARD_SIZE` en `shop.gd`), que la fuente cargue, y que con 6+ ofertas/reliquias nada se salga de la pantalla.
+
+## FASE 5.4 (SIN probar en Godot)
+**1. Pantalla de contratos rediseñada** (`contract.gd`, reescrito desde el mockup de Figma "CONTRATO DE LA RONDA N"; la escena `contract.tscn` no cambió). Mismo estilo que el HUD (`ui.gd`: Lilita One, amarillo/cian/verde, bordes gruesos):
+- Cabecera "CONTRATO DE LA RONDA N" + subtítulo; **3 tarjetas** iguales (alto 470) y pie con el título del juego y "Pulsa la tecla de tu contrato para elegir."
+- Cada tarjeta: **nivel de riesgo** (SIN RIESGO en cian / RIESGO 1 · MEDIO / RIESGO 2 · ALTO en amarillo), **icono de 96 px** (`icon_box.gd`) + nombre, descripción, y los números ya calculados **con tus mejoras y reliquias**: `Cuota: N puntos` (verde) y `Dinero xN · Tiempo: Ns`. Botón `Elegir (n)`: oscuro con borde amarillo en el tranquilo, amarillo lleno en los de riesgo. Teclas 1/2/3 (y teclado numérico) o clic.
+- **Iconos opcionales:** `res://assets/contract_<id>.png` (`calm`, `double`, `rush`, `vip`, `high`, `slippery`). Sin PNG sale una letra provisional (R, x2, P, V, $, ~). Añadidos a `assets/LEEME.txt`.
+- `game.gd`: cada contrato tiene ahora `"risk"` (0 ninguno, 1 medio, 2 alto): doble o nada 2, cuota de lujo 2, prisa 1, VIP 1, piso de champán 1. Nuevas `contract_val(id, key, default)`, y `round_time(r, cid)` / `current_quota(r, cid)` aceptan un contrato cualquiera (las tarjetas muestran los 3 sin activarlos). Se corrigieron acentos en nombres/descripciones ("Piso de champán", "La opción segura").
+- Se quitó el "Dinero: $N" de esa pantalla (no está en el mockup).
+**2. Tiempo de ronda (se cambia en `game.gd`, arriba del todo):** `BASE_TIME` = **30 s** en toda ronda normal (no crece con las rondas) y `BOSS_EXTRA_TIME` = **10 s** extra en la gala, o sea **40 s** con el jefe. Solo cambia con contratos (Prisa −10 s), mejoras (Reloj de pulsera +5 s/nivel) y reliquias (Reloj de oro +10 s, Gafas −5 s). El tope del reloj al sumar bonus (relojes +2 s, pedidos +4 s) es `MAX_TIME` = 60 en `main.gd`.
+**Archivos tocados:** `contract.gd`, `game.gd`, `main.gd` (solo constante/comentario), `assets/LEEME.txt`, `INFORME.md`.
+**Pendiente (mockups ya recibidos):** "RONDA N SUPERADA" y "FIN DE LA PARTIDA" con este mismo estilo; menú. (La boutique se hizo en 5.5.)
+**Al probar:** que la fuente cargue, que los textos de las tarjetas no se corten (nombres largos se parten en 2 líneas) y que "Dinero x2.5 · Tiempo: 40s" quepa en una línea; que la cuota/tiempo mostrados coincidan con la ronda real.
+
+## FASE 5.3 (HUD rediseñado desde el mockup de Figma, SIN probar en Godot)
+- **Estilo:** paleta de la heredera (naranja `#F04800`, amarillo `#FFE61A`, piel `#F8B080`, contorno casi negro), paneles con borde grueso y sombra dura, fuente **Lilita One** (`fonts/LilitaOne-Regular.ttf`, licencia OFL en `fonts/OFL.txt`). Todo el estilo compartido vive en **`ui.gd`** (colores, `font()`, `panel_style()`, `label()`).
+- **`hud.gd` reescrito** con el layout del mockup (1280x720): barra superior naranja (tiempo · puntos con barra hacia la cuota · dinero), tarjeta de ronda/contrato, "Llevas X/Y" con casillas, combo con barra, reliquias abajo al centro, herramientas abajo a la derecha (Q Bolsazo con recarga, Shift Turbo, F Flash, Escudo automático), barra del jefe por segmentos, pantalla de resultados con panel. La API que usa `main.gd` no cambió.
+- **`order_panel.gd`** (Caprichos de hoy) rehecho: esquina inferior izquierda, icono + nombre + casilla verde al entregar. **`icon_box.gd`** (nuevo): cuadrito de icono reutilizable (cosa de lujo, asset o letra provisional).
+- **El mapa cambió de tamaño:** ahora `MAP_RECT = Rect2(48, 100, 1184, 528)` en `main.gd` (antes 50px de margen, 1180x620). El HUD tapa parte del mapa a la izquierda y abajo a la derecha, así que `hud.gd` define `ZONES` y `main.gd`/`pit.gd` evitan poner objetos, peligros y vórtice debajo. Si estorba: paneles más transparentes o achicar el mapa.
+- No se incluyó "Esc · Pausa" del mockup (no existe pausa). El escudo es automático (no tiene tecla).
+- Assets opcionales nuevos (iconos del HUD: `icon_time`, `icon_money`, `tool_*`, `relic_*`) en `assets/LEEME.txt`.
+- **Al probar:** que cargue la fuente (si no, usa la de Godot), que ningún panel tape cosas importantes, y que el tamaño de la ventana no descuadre nada.
+- Pendiente: tienda (hecha en 5.5) y contratos (hecho en 5.4).
+
+## FASE 5.2 (SIN probar en Godot)
 **1. Más objetos en la gala del jefe** (`main.gd`): ronda normal sigue igual (18 objetos, reaparece uno cada 1.5 s). En la gala: `BOSS_ITEMS_ON_MAP = 36` y `BOSS_ITEM_RESPAWN = 0.45 s`
 (antes eran 18 y 1.5 s). El tiempo de la gala NO se tocó (+25 s). Si aún faltan objetos: subir esas dos constantes; si sobran, bajarlas.
 **2. Código listo para assets** — nuevo **`assets.gd`** (registro central). Regla: si existe `res://assets/<clave>.png` el juego lo usa solo; si no, dibuja el provisional.
@@ -133,7 +182,7 @@ Poner un asset = copiar el PNG con el nombre exacto a `res://assets/`. No hay qu
 - Elige sitio lejos del anterior (320 px) y de charcos/pinchos; empuja fuera las cosas que quedaron debajo. Señales `relocating` / `relocated`.
 **Jefe reforzado** (`hazard.gd` + `game.gd`): radio 70 (+4/jefe, tope 90; antes 46) · vida 5 (+1/jefe, tope 9; antes 3) · velocidad 115 (+12, tope 210; antes 70) ·
 disparo cada 2.4 s (−0.25, mín 1.2) · destellos 310 px/s y más grandes, **apuntan por delante de ti** · **embestida** (aviso rojo 0.7 s y carga x3.4 de velocidad) ·
-**furia** con la mitad de vida: +30% velocidad, dispara 3 destellos en abanico y más seguido · aturdido por daño 1.6 s (antes 2.5) · la Gala dura +25 s (antes +15).
+**furia** con la mitad de vida: +30% velocidad, dispara 3 destellos en abanico y más seguido · aturdido por daño 1.6 s (antes 2.5) · la Gala dura +25 s en esa fase (ahora +15 sobre 40 s = 55 s, ver 5.4).
 Bolsazo/Flash ahora hacen que el jefe **trastabille** (≤1 s, pierde la embestida) pero no le quitan vida.
 Textos: "agujero/pozo" → "vórtice" (título del juego y archivo del proyecto sin cambiar).
 **Por calibrar:** ¿vida 5 + caprichos de 2 objetos en 55 s es justo? ¿el salto del vórtice cada 16 s es molesto o divertido? ¿la embestida se esquiva bien?
