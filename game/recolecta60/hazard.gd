@@ -75,7 +75,7 @@ func _update_face(delta: float) -> void:
 		return
 	var aim: Vector2 = dash_dir if dash_state == "dash" else target.position - position
 	if aim.length() > 1.0:
-		face = lerp_angle(face, aim.angle(), minf(1.0, delta * 10.0))
+		face = lerp_angle(face, aim.angle() - PI / 2.0, minf(1.0, delta * 10.0))
 
 func slows() -> bool:
 	return kind == "puddle"

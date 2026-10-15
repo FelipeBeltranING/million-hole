@@ -59,7 +59,7 @@ func _physics_process(delta: float) -> void:
 	var dir := Vector2.ZERO if stun_timer > 0.0 else _read_direction()
 	if dir != Vector2.ZERO:
 		facing = dir
-		body_angle = lerp_angle(body_angle, facing.angle(), minf(1.0, delta * 18.0))
+		body_angle = lerp_angle(body_angle, facing.angle() - PI / 2.0, minf(1.0, delta * 18.0))
 		queue_redraw()
 	var turbo := TURBO_MULT if turbo_timer > 0.0 else 1.0
 	velocity = dir * speed * slow * turbo

@@ -40,8 +40,6 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	# con asset: res://assets/coin.png | bill.png | bar.png (la moneda gira achatandose, como el provisional)
 	var spin := Vector2.ONE
-	if kind == "coin":
-		spin = Vector2(maxf(absf(cos(Time.get_ticks_msec() / 180.0 + spin_offset)), 0.15), 1.0)
 	if Assets.draw(self, kind, Assets.SIZES[kind], Vector2.ZERO, 0.0, spin):
 		return
 	match kind:
