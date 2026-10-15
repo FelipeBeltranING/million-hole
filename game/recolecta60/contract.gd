@@ -9,9 +9,18 @@ const IconBox = preload("res://icon_box.gd")
 
 const MAIN_SCENE := "res://main.tscn"
 
-const BG := Color("18181B")      # fondo de la pantalla
-const CARD := Color("1F2937")    # fondo de las tarjetas
-const DARK := Color("09090B")    # boton "tranquilo"
+const BG := Color("3B3466")        # fondo: el moradito del suelo del juego, un poco mas claro
+const CARD := Color("54478A")      # tarjetas y paneles: lila
+const DARK := Color("2A2547")      # botones oscuros: morado del suelo
+const DISABLED := Color("6A5F96")  # botones que no se pueden usar
+const HOVER_DARK := Color("3B3466") # hover de los botones oscuros
+const ORANGE := Color("F2A65E")    # naranja damasco suave: botones de accion y riesgo (contraste con el morado)
+const ACCENT := Color("EADFCB")    # crema pergamino: titulos, botones (suave, sin brillo)
+const BORDER := Color("C9B2F5")    # lila pastel: bordes de tarjetas
+const MINT := Color("A6F2BC")      # verde pastel (cuota)
+const SKY := Color("A5EAF2")       # celeste pastel
+const CORAL := Color("E8C98A")     # arena suave (aviso de jefe)
+const MUTED := Color("D5CCEE")     # texto secundario
 
 const RISK_TAGS := ["SIN RIESGO", "RIESGO 1 · MEDIO", "RIESGO 2 · ALTO"]
 
@@ -45,7 +54,7 @@ func _ready() -> void:
 	# Cabecera
 	var head := VBoxContainer.new()
 	head.add_theme_constant_override("separation", 6)
-	head.add_child(UI.label("CONTRATO DE LA RONDA %d" % r, 48, UI.YELLOW, 8))
+	head.add_child(UI.label("CONTRATO DE LA RONDA %d" % r, 48, ACCENT, 8))
 	head.add_child(UI.label("Elige cuánto riesgo quieres. Más riesgo = más dinero.", 22, Color.WHITE, 0))
 	page.add_child(head)
 	page.add_child(_spacer_v())
@@ -61,9 +70,9 @@ func _ready() -> void:
 
 	# Pie
 	var foot := HBoxContainer.new()
-	foot.add_child(UI.label(Game.TITLE, 20, UI.YELLOW, 4))
+	foot.add_child(UI.label(Game.TITLE, 20, ACCENT, 4))
 	foot.add_child(_spacer_h())
-	foot.add_child(UI.label("Pulsa la tecla de tu contrato para elegir.", 18, UI.GRAY, 0))
+	foot.add_child(UI.label("Pulsa la tecla de tu contrato para elegir.", 18, MUTED, 0))
 	page.add_child(foot)
 
 func _spacer_v() -> Control:
@@ -85,12 +94,12 @@ func _make_card(i: int, r: int) -> PanelContainer:
 	var id: String = choices[i]
 	var info: Dictionary = Game.CONTRACTS[id]
 	var risk := clampi(int(info.get("risk", 0)), 0, 2)
-	var accent := UI.CYAN if risk == 0 else UI.YELLOW
+	var accent := SKY if risk == 0 else ORANGE
 
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.custom_minimum_size = Vector2(0, 470)
-	card.add_theme_stylebox_override("panel", UI.panel_style(CARD, UI.YELLOW, 14, 3, false, 24))
+	card.add_theme_stylebox_override("panel", UI.panel_style(CARD, BORDER, 14, 3, false, 24))
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 20)
@@ -122,7 +131,7 @@ func _make_card(i: int, r: int) -> PanelContainer:
 	# numeros: cuota, dinero y tiempo (ya con tus mejoras y reliquias)
 	var nums := VBoxContainer.new()
 	nums.add_theme_constant_override("separation", 6)
-	nums.add_child(UI.label("Cuota: %d puntos" % Game.current_quota(r, id), 28, UI.GREEN, 3))
+	nums.add_child(UI.label("Cuota: %d puntos" % Game.current_quota(r, id), 28, MINT, 3))
 	nums.add_child(UI.label("Dinero x%s · Tiempo: %ds" % [
 		_fmt(Game.contract_val(id, "money_mult", 1.0)), roundi(Game.round_time(r, id))], 26, accent, 3))
 	col.add_child(nums)
@@ -139,12 +148,12 @@ func _make_button(i: int, risk: int) -> Button:
 	btn.add_theme_font_override("font", UI.font())
 	btn.add_theme_font_size_override("font_size", 28)
 	var filled := risk > 0   # los contratos con riesgo: boton amarillo; el tranquilo: oscuro con borde amarillo
-	var fill := UI.YELLOW if filled else DARK
-	var hover := UI.YELLOW.lightened(0.25) if filled else Color("27272A")
-	var txt := UI.INK if filled else UI.YELLOW
-	btn.add_theme_stylebox_override("normal", UI.panel_style(fill, UI.YELLOW, 12, 3, false, 8))
-	btn.add_theme_stylebox_override("hover", UI.panel_style(hover, UI.YELLOW, 12, 3, false, 8))
-	btn.add_theme_stylebox_override("pressed", UI.panel_style(hover, UI.YELLOW, 12, 3, false, 8))
+	var fill := ORANGE if filled else DARK
+	var hover := ORANGE.lightened(0.2) if filled else HOVER_DARK
+	var txt := UI.INK if filled else ACCENT
+	btn.add_theme_stylebox_override("normal", UI.panel_style(fill, ORANGE if filled else ACCENT, 12, 3, false, 8))
+	btn.add_theme_stylebox_override("hover", UI.panel_style(hover, ORANGE if filled else ACCENT, 12, 3, false, 8))
+	btn.add_theme_stylebox_override("pressed", UI.panel_style(hover, ORANGE if filled else ACCENT, 12, 3, false, 8))
 	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		btn.add_theme_color_override(key, txt)
 	btn.pressed.connect(_choose.bind(i))
