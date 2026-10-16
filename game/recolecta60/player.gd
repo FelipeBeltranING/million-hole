@@ -39,6 +39,7 @@ var swing_cd := 0.0      # enfriamiento del bolsazo
 var swing_fx := 0.0      # animacion del bolsazo
 var turbo_timer := 0.0
 var fx_was := false
+var in_puddle := false    # para el sonido de entrar al charco (suena una vez al entrar)
 var body_angle := 0.0      # giro suave del dibujo (el asset "player" se dibuja mirando a la derecha y se gira)
 
 func _ready() -> void:
@@ -56,6 +57,9 @@ func _physics_process(delta: float) -> void:
 	turbo_timer = maxf(turbo_timer - delta, 0.0)
 	modulate.a = 0.45 if (invuln_timer > 0.0 and int(invuln_timer * 10.0) % 2 == 0) else 1.0
 	var slow := _check_hazards()
+	if slow < 1.0 and not in_puddle:
+		Sound.play("sfx_puddle")
+	in_puddle = slow < 1.0
 	var dir := Vector2.ZERO if stun_timer > 0.0 else _read_direction()
 	if dir != Vector2.ZERO:
 		facing = dir
@@ -89,7 +93,9 @@ func _take_hit() -> void:
 	if Game.use_item("shield"):
 		invuln_timer = 1.0
 		shield_blocked.emit()
+		Sound.play("sfx_shield")
 		return
+	Sound.play("sfx_hit")
 	stun_timer = STUN_TIME * Game.stun_mult()
 	invuln_timer = INVULN_TIME
 	var dropped := carried.duplicate()
@@ -108,11 +114,13 @@ func _collect_pickups(delta: float) -> void:
 			d = position.distance_to(coin.position)
 		if d <= COIN_PICK_RADIUS:
 			coin.collectable = false
+			Sound.play("sfx_" + String(coin.kind))   # sfx_coin / sfx_bill / sfx_bar
 			coin_collected.emit(coin.value)
 			coin.queue_free()
 	for bonus in get_tree().get_nodes_in_group("time_bonuses"):
 		if position.distance_to(bonus.position) <= BONUS_PICK_RADIUS:
 			bonus.remove_from_group("time_bonuses")
+			Sound.play("sfx_time_bonus")
 			time_bonus_collected.emit(bonus.seconds)
 			bonus.queue_free()
 
@@ -146,6 +154,7 @@ func _swing() -> void:
 	if Game.level("bolsazo") <= 0 or swing_cd > 0.0:
 		return
 	swing_cd = Game.bolsazo_cooldown()
+	Sound.play("sfx_swing")
 	swing_fx = SWING_FX_TIME
 	var r := Game.bolsazo_radius()
 	for h in get_tree().get_nodes_in_group("hazards"):
@@ -157,6 +166,7 @@ func _swing() -> void:
 func _flash() -> void:
 	if not Game.use_item("flash"):
 		return
+	Sound.play("sfx_flash")
 	swing_fx = SWING_FX_TIME
 	for h in get_tree().get_nodes_in_group("hazards"):
 		if h.kind == "paparazzi":
@@ -168,12 +178,14 @@ func _turbo() -> void:
 	if turbo_timer > 0.0 or not Game.use_item("turbo"):
 		return
 	turbo_timer = TURBO_TIME
+	Sound.play("sfx_turbo")
 	queue_redraw()
 
 func _interact() -> void:
 	# Dentro del vórtice: soltar todo lo que cargas
 	if pit.contains(position):
 		if carried.size() > 0:
+			Sound.play("sfx_deposit")
 			items_deposited.emit(carried.duplicate())
 			carried.clear()
 			_notify()
@@ -182,6 +194,10 @@ func _interact() -> void:
 
 func _try_pickup() -> void:
 	if carried.size() >= max_carry:
+		for node in get_tree().get_nodes_in_group("items"):
+			if position.distance_to(node.position) <= pickup_radius:
+				Sound.play("sfx_carry_full")   # manos llenas y hay algo al alcance
+				break
 		return
 	var best = null
 	var best_dist := pickup_radius
@@ -191,6 +207,7 @@ func _try_pickup() -> void:
 			best = node
 			best_dist = d
 	if best != null:
+		Sound.play("sfx_pickup")
 		carried.append(best.data)
 		best.queue_free()
 		_notify()

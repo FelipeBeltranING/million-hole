@@ -96,8 +96,10 @@ func is_harmful() -> bool:
 func on_hit() -> void:
 	match kind:
 		"paparazzi":
+			Sound.play("sfx_pap_flash")
 			pause_timer = PAPARAZZI_PAUSE
 		"boss":
+			Sound.play("sfx_pap_flash")
 			pause_timer = 1.5
 			dash_state = ""
 			dash_cd = 3.0
@@ -116,11 +118,13 @@ func get_stunned(secs: float, push_dir: Vector2) -> void:
 	if kind != "paparazzi":
 		return
 	stun_timer = secs
+	_snd("sfx_pap_stun", 700.0)
 	position += push_dir * 70.0
 	_clamp_to_map()
 
 # El jefe recibe daño al completar un capricho: se aturde y sale despedido lejos del pozo
 func boss_damaged(push_dir: Vector2) -> void:
+	Sound.play("sfx_boss_hit")
 	stun_timer = 1.6
 	dash_state = ""
 	dash_cd = 3.0
@@ -135,14 +139,23 @@ func _clamp_to_map() -> void:
 	var m := Vector2(radius, radius)
 	position = position.clamp(map_rect.position + m, map_rect.end - m)
 
+# Sonido de este peligro: se oye mas bajo cuanto mas lejos esta la heredera
+func _snd(key: String, max_dist: float = 700.0, pitch: float = 1.0) -> void:
+	if target != null:
+		Sound.play_near(key, position, target.position, max_dist, pitch)
+	else:
+		Sound.play(key, 0.0, pitch)
+
 func _update_spikes(delta: float) -> void:
 	phase_time += delta
 	if state == "off" and phase_time >= SPIKE_OFF_TIME:
 		state = "warn"
 		phase_time = 0.0
+		_snd("sfx_spikes_warn", 450.0)
 	elif state == "warn" and phase_time >= SPIKE_WARN_TIME:
 		state = "on"
 		phase_time = 0.0
+		_snd("sfx_spikes_on", 450.0)
 	elif state == "on" and phase_time >= SPIKE_ON_TIME:
 		state = "off"
 		phase_time = 0.0
@@ -181,6 +194,7 @@ func _update_boss(delta: float) -> void:
 			dash_dir = (target.position - position).normalized()
 			dash_state = "dash"
 			dash_t = 0.55
+			Sound.play("sfx_boss_dash")
 		return
 	if dash_state == "dash":
 		position += dash_dir * dash_speed * delta
@@ -197,6 +211,7 @@ func _update_boss(delta: float) -> void:
 	dash_cd -= delta
 	if dash_cd <= 0.0 and position.distance_to(target.position) > 160.0:
 		dash_state = "windup"
+		Sound.play("sfx_boss_dash_warn")
 		dash_t = 0.7 if not rage else 0.55
 	shoot_timer -= delta
 	if shoot_timer <= 0.0:
@@ -204,6 +219,7 @@ func _update_boss(delta: float) -> void:
 		_shoot(rage)
 
 func _shoot(rage: bool) -> void:
+	Sound.play("sfx_boss_shoot")
 	# apunta un poco por delante de donde vas a estar
 	var lead: Vector2 = target.position
 	if "velocity" in target:

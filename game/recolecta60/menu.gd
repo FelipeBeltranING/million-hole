@@ -7,6 +7,7 @@ const Assets = preload("res://assets.gd")
 const MAIN_SCENE := "res://main.tscn"
 
 func _ready() -> void:
+	Sound.music("music_menu")
 	# fondo de inicio: assets/bg_menu.* o assets/fondo.jpg; si no hay, color liso
 	var bg_tex := Assets.background("menu")
 	if bg_tex != null:
@@ -72,6 +73,7 @@ func _button(text: String) -> Button:
 	return b
 
 func _play() -> void:
+	Sound.play("ui_start")
 	Game.reset_run()
 	get_tree().change_scene_to_file(MAIN_SCENE)
 

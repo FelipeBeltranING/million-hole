@@ -74,6 +74,7 @@ func _update_jump(delta: float) -> void:
 			if state_t <= 0.0:
 				state = "closing"
 				state_t = CLOSE_TIME
+				Sound.play("sfx_vortex_move")
 		"closing":
 			state_t -= delta
 			anim = clampf(state_t / CLOSE_TIME, 0.0, 1.0)

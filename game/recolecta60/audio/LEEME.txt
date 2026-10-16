@@ -1,0 +1,73 @@
+CARPETA DE AUDIO  (res://audio/)
+Copia aqui los audios con el NOMBRE EXACTO de la lista (.ogg, .wav o .mp3). El juego los detecta solo (no hay que tocar codigo).
+Si falta un archivo, ese momento simplemente queda en silencio (no da error). Puedes ir agregando de a uno.
+Si hay dos con el mismo nombre, gana .ogg, luego .wav, luego .mp3. Despues de copiar, abre el proyecto en Godot una vez para que los importe.
+
+Reglas:
+ - Musica: en bucle, 60-120 s, de preferencia .ogg. Efectos: cortos, de preferencia .ogg o .wav, en mono.
+ - Volumen parejo entre archivos; si uno suena muy fuerte o bajo se ajusta en audio.gd (VOLUMES), sin tocar el archivo.
+ - Revisa la licencia de cada audio y anota el credito en un CREDITOS.txt.
+ - Total: 45 sonidos. Prioridad: [1] imprescindible (12), [2] recomendado (19), [3] pulido (14).
+
+MÚSICA (en bucle)
+ [1] music_menu           Menú principal.
+ [1] music_game           Cada ronda normal (30 s de presión).
+ [2] music_boss           La gala con el jefe (rondas 5, 10, 15...). Si no existe, suena music_game.
+ [2] music_shop           Boutique y pantalla de contratos. Si no existe, suena music_menu.
+
+FANFARRIAS DE FIN DE RONDA (suenan una vez; la música se apaga antes)
+ [1] jingle_win           Ronda superada (sale la pantalla RONDA N SUPERADA).
+ [1] jingle_lose          Fin de la partida (perdiste la cuota o el jefe).
+
+MENÚS Y BOUTIQUE
+ [1] ui_start             Jugar (menú), Siguiente ronda (boutique) y volver a jugar tras perder.
+ [2] ui_buy               Compraste algo en la boutique.
+ [3] ui_click             Pasar de la pantalla 'Ronda superada' a la boutique (Enter).
+ [3] ui_reroll            Renovar ofertas de la boutique.
+ [3] ui_contract          Elegir un contrato (1/2/3 o clic).
+ [3] ui_back              Esc / Terminar partida.
+
+LA HEREDERA (jugador)
+ [1] sfx_pickup           Recoges un objeto de lujo (E / Espacio).
+ [1] sfx_deposit          Tiras lo que llevas al vórtice.
+ [1] sfx_hit              Te golpea un peligro (pinchos, paparazzi, jefe, destello). Sin escudo.
+ [3] sfx_carry_full       Intentas recoger con las manos llenas y hay algo al alcance.
+ [2] sfx_shield           El Escudo de diamantes bloquea un golpe.
+ [2] sfx_swing            Bolsazo (Q).
+ [2] sfx_turbo            Turbo de lujo (Shift).
+ [2] sfx_flash            Flash cegador (F).
+ [3] sfx_puddle           Entras a un charco de champán (suena al entrar, no todo el rato).
+
+DINERO Y TIEMPO
+ [1] sfx_coin             Recoges una moneda. Salen muchas seguidas: que sea CORTO. El código le varía el tono solo.
+ [2] sfx_bill             Recoges un billete.
+ [2] sfx_bar              Recoges un lingote.
+ [1] sfx_time_bonus       Recoges el reloj de +2 s.
+ [2] sfx_time_tick        Cada segundo de los últimos 5 de la ronda.
+ [2] sfx_round_start      Empieza una ronda normal (en la gala suena sfx_boss_intro en su lugar).
+ [1] sfx_round_end        Se acaba el tiempo (justo antes de la fanfarria).
+
+CAPRICHOS, COMBO Y CUOTA
+ [2] sfx_combo            Cada vez que tiras algo con combo x2 o más. El código sube el tono con el combo.
+ [3] sfx_order_item       Un objeto del capricho se marca como entregado.
+ [1] sfx_order_complete   Capricho completo (+4 s).
+ [2] sfx_quota            Llegas a la cuota (sale '¡CUOTA CUMPLIDA!').
+
+EL VÓRTICE
+ [2] sfx_vortex_warn      Aviso de que el vórtice se muda (2 s antes).
+ [3] sfx_vortex_move      El vórtice se cierra y salta a otro sitio.
+
+PELIGROS (los pinchos se oyen más bajo cuanto más lejos estás)
+ [3] sfx_spikes_warn      Los pinchos empiezan a avisar (parpadean naranja).
+ [2] sfx_spikes_on        Los pinchos salen.
+ [2] sfx_pap_flash        Un paparazzi (o el jefe) te toca y hace flash. Suena junto a sfx_hit.
+ [3] sfx_pap_stun         Un paparazzi queda aturdido por el Bolsazo o el Flash.
+
+JEFE: PAPARAZZI SUPREMO
+ [2] sfx_boss_intro       Empieza la gala (aparece el jefe).
+ [3] sfx_boss_shoot       El jefe dispara un destello.
+ [3] sfx_boss_dash_warn   El jefe avisa la embestida (línea roja, dura 0.55-0.7 s).
+ [3] sfx_boss_dash        El jefe embiste (dura 0.55 s).
+ [2] sfx_boss_hit         Un capricho completado le quita vida al jefe.
+ [3] sfx_boss_rage        El jefe se enfurece (le queda la mitad de vida).
+ [2] sfx_boss_defeated    El jefe cae derrotado (salen 40 monedas).

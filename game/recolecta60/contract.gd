@@ -31,6 +31,7 @@ var choices: Array = []
 var chosen := false
 
 func _ready() -> void:
+	Sound.music("music_shop")
 	choices = Game.roll_contracts()
 	var r := Game.round_number
 
@@ -163,6 +164,7 @@ func _choose(i: int) -> void:
 	if chosen:
 		return
 	chosen = true
+	Sound.play("ui_contract")
 	Game.set_contract(choices[i])
 	get_tree().change_scene_to_file(MAIN_SCENE)
 

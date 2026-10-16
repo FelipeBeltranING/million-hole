@@ -80,6 +80,7 @@ var map_rect := Rect2()
 var pit
 var player
 var hud
+var last_tick := -1    # ultimo segundo en que sono el tic de cuenta regresiva
 
 func _ready() -> void:
 	randomize()
@@ -137,6 +138,9 @@ func _ready() -> void:
 	_spawn_hazards()
 	if boss_round:
 		_spawn_boss()
+	Sound.music("music_boss" if boss_round else "music_game")
+	if not boss_round:
+		Sound.play("sfx_round_start")   # en la gala suena sfx_boss_intro en su lugar
 
 # ---------------------------------------------------------------- Objetos
 
@@ -210,6 +214,10 @@ func _process(delta: float) -> void:
 		return
 	time_left = maxf(time_left - delta, 0.0)
 	hud.set_time(time_left)
+	var secs_left := ceili(time_left)
+	if time_left > 0.0 and secs_left <= 5 and secs_left != last_tick:
+		last_tick = secs_left
+		Sound.play("sfx_time_tick")   # ultimos 5 segundos
 	hud.set_tools(Game.level("bolsazo"), player.swing_cd,
 		Game.stock_of("turbo"), Game.stock_of("shield"), Game.stock_of("flash"))
 	_update_combo(delta)
@@ -248,6 +256,8 @@ func _on_items_deposited(items: Array) -> void:
 	combo += 1
 	combo_timer = maxf(2.0, COMBO_WINDOW + Game.combo_window_bonus())
 	var mult := _multiplier()
+	if combo >= 2:
+		Sound.play("sfx_combo", 0.0, 1.0 + 0.07 * minf(float(combo - 2), 8.0))   # sube el tono con el combo
 	var om := Game.order_mult()
 	var coin_total := 0
 	var slot_bonus := 0
@@ -265,6 +275,7 @@ func _on_items_deposited(items: Array) -> void:
 	if slot_bonus > 0:
 		slot_bonus = roundi(float(slot_bonus) * om)
 		score += slot_bonus
+		Sound.play("sfx_order_item")
 		hud.toast("Pedido +%d" % slot_bonus, Color(1.0, 0.82, 0.15))
 	_spawn_coins(coin_total)
 	hud.set_score(score)
@@ -274,6 +285,7 @@ func _on_items_deposited(items: Array) -> void:
 
 	if _order_is_complete():
 		orders_completed += 1
+		Sound.play("sfx_order_complete")
 		score += roundi(ORDER_COMPLETE_POINTS * om)
 		time_left = minf(time_left + ORDER_COMPLETE_TIME, max_time)
 		_spawn_coins(roundi(ORDER_COMPLETE_COINS * om))
@@ -296,9 +308,11 @@ func _check_quota() -> void:
 
 func _show_quota_toast() -> void:
 	if running:
+		Sound.play("sfx_quota")
 		hud.toast("¡CUOTA CUMPLIDA!", Color(0.4, 1.0, 0.5))
 
 func _on_pit_relocating(secs: float) -> void:
+	Sound.play("sfx_vortex_warn")
 	hud.toast("¡El vórtice se muda!", Color(1.0, 0.82, 0.15))
 
 func _on_pit_relocated() -> void:
@@ -427,6 +441,7 @@ func _spawn_boss() -> void:
 	boss.shoot_interval = Game.boss_shoot_interval(r)
 	add_child(boss)
 	move_child(boss, player.get_index())
+	Sound.play("sfx_boss_intro")
 	hud.set_boss(boss.hp, boss.max_hp)
 	hud.toast("¡GALA!  Completa caprichos para derrotar al jefe", Color(1.0, 0.82, 0.15))
 
@@ -445,12 +460,14 @@ func _damage_boss() -> void:
 		boss = null
 		_spawn_coins(40)
 		hud.hide_boss()
+		Sound.play("sfx_boss_defeated")
 		hud.toast("¡JEFE DERROTADO!", Color(1.0, 0.82, 0.15))
 	else:
 		var was_raging: bool = boss.is_raging()
 		boss.boss_damaged(away)
 		hud.set_boss(boss.hp, boss.max_hp)
 		if boss.is_raging() and not was_raging:
+			Sound.play("sfx_boss_rage")
 			hud.toast("¡EL JEFE SE ENFURECE!", Color(1.0, 0.25, 0.3))
 		hud.toast("¡GOLPE AL JEFE!  (%d/%d)" % [boss.max_hp - boss.hp, boss.max_hp], Color(1.0, 0.55, 0.2))
 
@@ -466,6 +483,10 @@ func _end_game() -> void:
 	if passed and boss_round:
 		Game.free_relic_pending = true   # premio: una reliquia gratis en la boutique
 	var new_record := Game.record_round(score)
+	Sound.stop_music(0.4)
+	Sound.play("sfx_round_end")
+	var jingle := "jingle_win" if passed else "jingle_lose"
+	get_tree().create_timer(0.8).timeout.connect(func(): Sound.play(jingle))
 	hud.set_combo(0, 1.0, 0.0)
 	hud.show_round_result({
 		"passed": passed, "score": score, "quota": quota, "coins": coins_collected,
@@ -483,11 +504,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 			if passed:
+				Sound.play("ui_click")
 				get_tree().change_scene_to_file("res://shop.tscn")
 			else:
+				Sound.play("ui_start")
 				Game.reset_run()   # perdiste: nueva partida directa
 				get_tree().change_scene_to_file("res://main.tscn")
 		elif event.keycode == KEY_ESCAPE:
+			Sound.play("ui_back")
 			Game.reset_run()
 			get_tree().change_scene_to_file("res://menu.tscn")
 

@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.6")
 [autoload]
 
 Game="*res://game.gd"
+Sound="*res://audio.gd"
 
 [display]
 
@@ -30,4 +31,5 @@ window/stretch/mode="canvas_items"
 
 [rendering]
 
+renderer/rendering_method="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.086, 0.075, 0.165, 1)

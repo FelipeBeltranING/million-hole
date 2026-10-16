@@ -1,4 +1,4 @@
-# Millones al agujero — Informe de estado (tras FASE 5.7: piso del mapa nuevo; FASE 5.6: barra naranja + fondos de menú/fin de partida; FASE 5.5: boutique rediseñada + FASE 5.4: contratos rediseñados, ronda de 30 s y gala de 40 s)
+# Millones al agujero — Informe de estado (tras FASE 5.8: audio por nombre, igual que los sprites; FASE 5.7: piso del mapa nuevo; FASE 5.6: barra naranja + fondos de menú/fin de partida; FASE 5.5: boutique rediseñada + FASE 5.4: contratos rediseñados, ronda de 30 s y gala de 40 s)
 
 > Pega este archivo al inicio de un chat nuevo y di: "continuemos con la siguiente fase".
 
@@ -42,6 +42,7 @@ La ronda dura siempre lo mismo; al llegar a la cuota sale "¡CUOTA CUMPLIDA!" y 
 | `hazard.gd` | Peligros: `puddle`, `spikes`, `paparazzi`, **`boss`**, **`orb`** (grupo `hazards`) |
 | `item.gd`, `item_database.gd` | Cosa del mapa / 12 cosas + `pick_weighted(mults)` (rareza ajustable) + `draw_shape()` |
 | `pit.gd` | El agujero (`radius`, `contains()`); main lo agranda con `Game.pit_scale()` |
+| `audio.gd` | **Nuevo (5.8).** Autoload `Sound`: reproduce `res://audio/<clave>.ogg/.wav/.mp3` si existe (si no, silencio). `Sound.play()`, `play_near()`, `music()`, `stop_music()` |
 | `coin.gd`, `time_bonus.gd` | Dinero (bill/gold/bar) y reloj +2 s |
 | `order_panel.gd`, `hud.gd` | Panel de caprichos; HUD (puntos/cuota, combo, herramientas, barra del jefe, reliquias, contrato), `toast()`, `show_round_result(info)` |
 
@@ -110,6 +111,16 @@ Tocarlo o recibir un destello = golpe normal (suelta lo que llevas, aturde). **S
 Vida 3 (+1 por jefe, tope 6). Bolsazo/Flash no le afectan. La Gala dura +15 s, cuota x0.8, sin contrato, con la mitad de paparazzi.
 **Superar la Gala exige cuota Y derrotar al jefe.** Premio: 40 piezas de dinero al derrotarlo + **una reliquia GRATIS** en la boutique siguiente (`free_relic_pending`).
 
+
+## FASE 5.8 (SIN probar en Godot)
+**Audio listo para recibir archivos, igual que los sprites.** Regla: si existe `res://audio/<clave>.ogg` (o `.wav` / `.mp3`) el juego lo reproduce solo; si no existe, queda en silencio sin error. Poner un audio = copiar el archivo con el nombre exacto. No hay que tocar código.
+- **`audio.gd`** (nuevo, autoload `Sound` en `project.godot`): caché de audios, 16 reproductores para efectos, uno aparte para música. Constantes ajustables arriba: `MUSIC_DB`/`SFX_DB`, `VOLUMES` (dB por sonido), `PITCH_RANDOM` (variación de tono), `MIN_GAP` (anti-ametrallado), `FALLBACKS` (`music_boss` → `music_game`, `music_shop` → `music_menu`).
+- **45 sonidos** enganchados a los eventos: música (menú, boutique/contratos, ronda, gala), fanfarrias de fin de ronda, menús/boutique, jugador (recoger, tirar, golpe, escudo, bolsazo, turbo, flash, charco), dinero (moneda/billete/lingote, reloj, tic de los últimos 5 s), caprichos/combo/cuota, vórtice (aviso y mudanza), peligros (pinchos, paparazzi) y jefe (aparece, dispara, embestida, golpe, furia, derrota).
+- Detalles: `sfx_combo` sube de tono con el combo; pinchos y paparazzi aturdidos se oyen más bajo si están lejos (`Sound.play_near`); al terminar la ronda la música se apaga con fundido, suena `sfx_round_end` y 0.8 s después `jingle_win` / `jingle_lose`; en la gala suena `sfx_boss_intro` en vez de `sfx_round_start`.
+- **Lista completa de nombres, cuándo suena cada uno y qué buscar: `INFORME_AUDIO.md`** (y versión corta en `audio/LEEME.txt`).
+- **Corregido de paso:** `assets/item_corona_rubies}.png` tenía una `}` en el nombre y no se detectaba; ahora es `item_corona_rubies.png`.
+**Archivos tocados:** `audio.gd` (nuevo), `audio/LEEME.txt` (nuevo), `INFORME_AUDIO.md` (nuevo), `project.godot`, `player.gd`, `hazard.gd`, `pit.gd`, `main.gd`, `menu.gd`, `shop.gd`, `contract.gd`, `assets/item_corona_rubies.png` (renombrado), `INFORME.md`.
+**Al probar:** que no salgan errores al abrir (hay un autoload nuevo); poner un `.wav` cualquiera como `audio/sfx_coin.wav` y comprobar que suena al recoger una moneda; que la música no se reinicie al pasar de la boutique a los contratos; que las monedas seguidas no suenen ametralladas.
 
 ## FASE 5.7 (SIN probar en Godot)
 **Piso del mapa nuevo** (antes verde liso): piso de baldosas índigo estilo mármol de lujo, para que destaquen el oro, la heredera rosa y los pinchos rojos. En `main.gd`, arriba, constantes para cambiarlo: `FLOOR_A` / `FLOOR_B` (las 2 baldosas alternadas), `FLOOR_TILE` (tamaño, 64 px), `FLOOR_OUTSIDE` (lo que queda detrás del HUD) y `FLOOR_EDGE` (línea dorada fina del borde). Para un fondo liso: poner `FLOOR_A` y `FLOOR_B` iguales. Si existe `assets/background.png` sigue mandando ese. `project.godot`: color de limpieza ajustado a juego.
@@ -207,4 +218,4 @@ Cada vez que se desarrolla una fase se entrega un informe nuevo como este.
 ## Hoja de ruta
 - **Siguiente:** probar 5.2 en Godot y calibrar; meter los primeros assets cuando lleguen.
 - **Fase 5b (propuesta):** más tipos de jefe (uno por tier), eventos aleatorios en ronda, peligros nuevos (muros móviles, cosas que se mueven), más reliquias/contratos, consumible Soborno / Segunda oportunidad.
-- **Fase 5c:** sonidos, partículas, temblor de pantalla, tutorial/explicación de contratos y reliquias, balance final.
+- **Fase 5c:** (sonidos: código listo en 5.8, faltan los archivos) partículas, temblor de pantalla, tutorial/explicación de contratos y reliquias, balance final.

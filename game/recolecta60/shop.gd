@@ -11,6 +11,8 @@ const MAIN_SCENE := "res://main.tscn"
 const CONTRACT_SCENE := "res://contract.tscn"
 const MENU_SCENE := "res://menu.tscn"
 
+
+
 const BG := Color("3B3466")        # fondo: el moradito del suelo del juego, un poco mas claro
 const CARD := Color("54478A")      # tarjetas y paneles: lila
 const DARK := Color("2A2547")      # botones oscuros: morado del suelo
@@ -35,6 +37,7 @@ var relics_row: HBoxContainer
 var stock_row: HBoxContainer
 
 func _ready() -> void:
+	Sound.music("music_shop")
 	Game.new_shop()
 	var next_r := Game.round_number + 1
 
@@ -333,14 +336,17 @@ func _refresh() -> void:
 # ---------------------------------------------------------------- Acciones
 
 func _on_buy(i: int) -> void:
-	Game.buy_offer(i)
+	if Game.buy_offer(i):
+		Sound.play("ui_buy")
 	_refresh()
 
 func _on_reroll() -> void:
-	Game.reroll()
+	if Game.reroll():
+		Sound.play("ui_reroll")
 	_refresh()
 
 func _next_round() -> void:
+	Sound.play("ui_start")
 	Game.round_number += 1
 	if Game.is_boss_round(Game.round_number):
 		Game.set_contract("calm")   # la gala no tiene contrato
@@ -349,6 +355,7 @@ func _next_round() -> void:
 		get_tree().change_scene_to_file(CONTRACT_SCENE)
 
 func _quit_run() -> void:
+	Sound.play("ui_back")
 	Game.reset_run()
 	get_tree().change_scene_to_file(MENU_SCENE)
 
