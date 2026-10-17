@@ -6,18 +6,18 @@ const Assets = preload("res://assets.gd")
 # Rareza: comun (weight 7-10), media (5), rara (3), legendaria (1). Legendaria = points >= 8 (brilla en el mapa)
 
 const ITEMS = [
-	{"id": "collar_perlas", "name": "Collar de perlas",      "shape": "circle",   "color": Color(0.96, 0.86, 0.92), "points": 1,  "weight": 10},
-	{"id": "tarjeta_platino", "name": "Tarjeta platino",       "shape": "card",     "color": Color(0.72, 0.78, 0.85), "points": 1,  "weight": 10},
-	{"id": "osito_oro", "name": "Osito bañado en oro",   "shape": "bear",     "color": Color(1.00, 0.80, 0.25), "points": 2,  "weight": 8},
-	{"id": "busto_marmol", "name": "Busto de mármol",       "shape": "square",   "color": Color(0.92, 0.92, 0.95), "points": 2,  "weight": 7},
-	{"id": "guantelete", "name": "Guantelete de repuesto","shape": "triangle", "color": Color(0.95, 0.90, 0.20), "points": 2,  "weight": 7},
-	{"id": "poni_cristal", "name": "Poni de cristal",       "shape": "diamond",  "color": Color(0.55, 0.90, 1.00), "points": 3,  "weight": 5},
-	{"id": "saco_dinero", "name": "Saco con $",            "shape": "sack",     "color": Color(0.30, 0.70, 0.35), "points": 3,  "weight": 5},
-	{"id": "mochila_cohete", "name": "Mochila cohete",        "shape": "rocket",   "color": Color(1.00, 0.45, 0.20), "points": 4,  "weight": 3},
-	{"id": "dron", "name": "Dron carísimo",         "shape": "hex",      "color": Color(0.30, 0.40, 0.90), "points": 4,  "weight": 3},
-	{"id": "corona_rubies", "name": "Corona con rubíes",     "shape": "crown",    "color": Color(0.95, 0.15, 0.30), "points": 5,  "weight": 3},
-	{"id": "cofre", "name": "Cofre sin abrir",       "shape": "square",   "color": Color(0.55, 0.33, 0.15), "points": 8,  "weight": 1},
-	{"id": "estatua_oro", "name": "Estatua de oro",        "shape": "star",     "color": Color(1.00, 0.90, 0.30), "points": 10, "weight": 1},
+	{"id": "collar_perlas", "name": "Pearl Necklace",      "shape": "circle",   "color": Color(0.96, 0.86, 0.92), "points": 1,  "weight": 10},
+	{"id": "tarjeta_platino", "name": "Platinum Card",       "shape": "card",     "color": Color(0.72, 0.78, 0.85), "points": 1,  "weight": 10},
+	{"id": "osito_oro", "name": "Gold-Plated Teddy",   "shape": "bear",     "color": Color(1.00, 0.80, 0.25), "points": 2,  "weight": 8},
+	{"id": "busto_marmol", "name": "Marble Bust",       "shape": "square",   "color": Color(0.92, 0.92, 0.95), "points": 2,  "weight": 7},
+	{"id": "guantelete", "name": "Spare Gauntlet","shape": "triangle", "color": Color(0.95, 0.90, 0.20), "points": 2,  "weight": 7},
+	{"id": "poni_cristal", "name": "Crystal Pony",       "shape": "diamond",  "color": Color(0.55, 0.90, 1.00), "points": 3,  "weight": 5},
+	{"id": "saco_dinero", "name": "Money Sack",            "shape": "sack",     "color": Color(0.30, 0.70, 0.35), "points": 3,  "weight": 5},
+	{"id": "mochila_cohete", "name": "Rocket Backpack",        "shape": "rocket",   "color": Color(1.00, 0.45, 0.20), "points": 4,  "weight": 3},
+	{"id": "dron", "name": "Overpriced Drone",         "shape": "hex",      "color": Color(0.30, 0.40, 0.90), "points": 4,  "weight": 3},
+	{"id": "corona_rubies", "name": "Ruby Crown",     "shape": "crown",    "color": Color(0.95, 0.15, 0.30), "points": 5,  "weight": 3},
+	{"id": "cofre", "name": "Unopened Chest",       "shape": "square",   "color": Color(0.55, 0.33, 0.15), "points": 8,  "weight": 1},
+	{"id": "estatua_oro", "name": "Golden Statue",        "shape": "star",     "color": Color(1.00, 0.90, 0.30), "points": 10, "weight": 1},
 ]
 
 # Peso efectivo de una cosa: raras (4-7 pts) x rare_mult, legendarias (>= 8 pts) x legend_mult

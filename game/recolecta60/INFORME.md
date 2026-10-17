@@ -1,4 +1,4 @@
-# Millones al agujero — Informe de estado (tras FASE 5.8: audio por nombre, igual que los sprites; FASE 5.7: piso del mapa nuevo; FASE 5.6: barra naranja + fondos de menú/fin de partida; FASE 5.5: boutique rediseñada + FASE 5.4: contratos rediseñados, ronda de 30 s y gala de 40 s)
+# Million Hole (antes «Millones al agujero») — Informe de estado (tras FASE 5.9: todo el texto del juego en inglés para la jam; FASE 5.8: audio por nombre, igual que los sprites; FASE 5.7: piso del mapa nuevo; FASE 5.6: barra naranja + fondos de menú/fin de partida; FASE 5.5: boutique rediseñada + FASE 5.4: contratos rediseñados, ronda de 30 s y gala de 40 s)
 
 > Pega este archivo al inicio de un chat nuevo y di: "continuemos con la siguiente fase".
 
@@ -111,6 +111,17 @@ Tocarlo o recibir un destello = golpe normal (suelta lo que llevas, aturde). **S
 Vida 3 (+1 por jefe, tope 6). Bolsazo/Flash no le afectan. La Gala dura +15 s, cuota x0.8, sin contrato, con la mitad de paparazzi.
 **Superar la Gala exige cuota Y derrotar al jefe.** Premio: 40 piezas de dinero al derrotarlo + **una reliquia GRATIS** en la boutique siguiente (`free_relic_pending`).
 
+
+## FASE 5.9 (SIN probar en Godot)
+**Juego traducido al inglés para subirlo a la jam.** Solo cambió el texto **visible dentro del juego**; el código, comentarios, ids, nombres de archivo y estos informes siguen en español.
+- **Nombre nuevo: MILLION HOLE** (`game.gd` → `TITLE`, y `project.godot` → `config/name` para el título de la ventana).
+- Traducidos: menú, HUD, avisos grandes, boutique, contratos, panel de caprichos (ahora **TODAY'S WHIMS**), pantallas de ronda superada / fin de partida, y los nombres y descripciones de cosas de lujo, mejoras, consumibles, reliquias y contratos. **Glosario completo en `TRADUCCION.md`.**
+- Criterio de términos: heiress, vortex, **whims** (caprichos/pedido), quota, cash, round, gala, boss, relic, contract, *Bag Smack* (Bolsazo), *Supreme Paparazzi*.
+- Único cambio de lógica: en `shop.gd` el nombre corto de los consumibles usa la **última** palabra (`split(" ")[-1]`) para que salga Shield / Turbo / Flash.
+- Revisado: no queda texto en español en ninguna cadena del juego y los sprites no tienen texto pintado.
+- Se eliminó `assets/item_corona_rubies}.png` (duplicado con `}` de más).
+**Archivos tocados:** `game.gd`, `item_database.gd`, `hud.gd`, `main.gd`, `menu.gd`, `shop.gd`, `contract.gd`, `order_panel.gd`, `project.godot`, `TRADUCCION.md` (nuevo), `INFORME.md`.
+**Al probar:** que ningún texto se corte o se salga de su tarjeta (las descripciones de reliquias y *Designer Bag Smack* son lo más largo) y que el título "MILLION HOLE" y los avisos grandes se vean bien.
 
 ## FASE 5.8 (SIN probar en Godot)
 **Audio listo para recibir archivos, igual que los sprites.** Regla: si existe `res://audio/<clave>.ogg` (o `.wav` / `.mp3`) el juego lo reproduce solo; si no existe, queda en silencio sin error. Poner un audio = copiar el archivo con el nombre exacto. No hay que tocar código.

@@ -22,10 +22,10 @@ const SKY := Color("A5EAF2")       # celeste pastel
 const CORAL := Color("E8C98A")     # arena suave (aviso de jefe)
 const MUTED := Color("D5CCEE")     # texto secundario
 
-const RISK_TAGS := ["SIN RIESGO", "RIESGO 1 · MEDIO", "RIESGO 2 · ALTO"]
+const RISK_TAGS := ["NO RISK", "RISK 1 · MEDIUM", "RISK 2 · HIGH"]
 
 # Letra provisional del icono mientras no exista el PNG
-const GLYPHS := {"calm": "R", "double": "x2", "rush": "P", "vip": "V", "high": "$", "slippery": "~"}
+const GLYPHS := {"calm": "C", "double": "x2", "rush": "R", "vip": "V", "high": "$", "slippery": "~"}
 
 var choices: Array = []
 var chosen := false
@@ -55,8 +55,8 @@ func _ready() -> void:
 	# Cabecera
 	var head := VBoxContainer.new()
 	head.add_theme_constant_override("separation", 6)
-	head.add_child(UI.label("CONTRATO DE LA RONDA %d" % r, 48, ACCENT, 8))
-	head.add_child(UI.label("Elige cuánto riesgo quieres. Más riesgo = más dinero.", 22, Color.WHITE, 0))
+	head.add_child(UI.label("ROUND %d CONTRACT" % r, 48, ACCENT, 8))
+	head.add_child(UI.label("Choose how much risk you want. More risk = more cash.", 22, Color.WHITE, 0))
 	page.add_child(head)
 	page.add_child(_spacer_v())
 
@@ -73,7 +73,7 @@ func _ready() -> void:
 	var foot := HBoxContainer.new()
 	foot.add_child(UI.label(Game.TITLE, 20, ACCENT, 4))
 	foot.add_child(_spacer_h())
-	foot.add_child(UI.label("Pulsa la tecla de tu contrato para elegir.", 18, MUTED, 0))
+	foot.add_child(UI.label("Press your contract's key to choose.", 18, MUTED, 0))
 	page.add_child(foot)
 
 func _spacer_v() -> Control:
@@ -132,8 +132,8 @@ func _make_card(i: int, r: int) -> PanelContainer:
 	# numeros: cuota, dinero y tiempo (ya con tus mejoras y reliquias)
 	var nums := VBoxContainer.new()
 	nums.add_theme_constant_override("separation", 6)
-	nums.add_child(UI.label("Cuota: %d puntos" % Game.current_quota(r, id), 28, MINT, 3))
-	nums.add_child(UI.label("Dinero x%s · Tiempo: %ds" % [
+	nums.add_child(UI.label("Quota: %d points" % Game.current_quota(r, id), 28, MINT, 3))
+	nums.add_child(UI.label("Cash x%s · Time: %ds" % [
 		_fmt(Game.contract_val(id, "money_mult", 1.0)), roundi(Game.round_time(r, id))], 26, accent, 3))
 	col.add_child(nums)
 
@@ -143,7 +143,7 @@ func _make_card(i: int, r: int) -> PanelContainer:
 
 func _make_button(i: int, risk: int) -> Button:
 	var btn := Button.new()
-	btn.text = "Elegir (%d)" % (i + 1)
+	btn.text = "Choose (%d)" % (i + 1)
 	btn.custom_minimum_size = Vector2(0, 56)
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.add_theme_font_override("font", UI.font())

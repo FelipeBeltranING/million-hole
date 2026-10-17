@@ -27,7 +27,7 @@ const CORAL := Color("E8C98A")     # arena suave (aviso de jefe)
 const MUTED := Color("D5CCEE")     # texto secundario
 const CARD_SIZE := Vector2(288, 208)
 
-const KIND_TAGS := {"upgrade": "MEJORA", "relic": "RELIQUIA", "consumable": "CONSUMIBLE"}
+const KIND_TAGS := {"upgrade": "UPGRADE", "relic": "RELIC", "consumable": "CONSUMABLE"}
 const KIND_COLORS := {"upgrade": Color.WHITE, "relic": ACCENT, "consumable": SKY}
 
 var money_label: Label
@@ -52,7 +52,7 @@ func _ready() -> void:
 	head.custom_minimum_size = Vector2(884, 0)
 	head.add_theme_constant_override("separation", 0)
 	head.add_child(UI.label("BOUTIQUE", 48, ACCENT, 8))
-	head.add_child(UI.label("Ronda %d superada - %d puntos | Próxima cuota: %d" % [
+	head.add_child(UI.label("Round %d cleared - %d points | Next quota: %d" % [
 		Game.round_number, Game.last_round_score, Game.quota_estimate(next_r)], 28, Color.WHITE, 4))
 	add_child(head)
 
@@ -73,11 +73,11 @@ func _ready() -> void:
 		banner.custom_minimum_size = Vector2(1216, 44)
 		banner.add_theme_stylebox_override("panel", UI.panel_style(Color(CORAL.r, CORAL.g, CORAL.b, 0.12), CORAL, 12, 3, false, 6))
 		var brow := HBoxContainer.new()
-		brow.add_child(UI.label("¡LA PRÓXIMA RONDA ES UNA GALA CON JEFE!", 28, CORAL, 3))
+		brow.add_child(UI.label("NEXT ROUND IS A GALA WITH A BOSS!", 28, CORAL, 3))
 		var bsp := Control.new()
 		bsp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		brow.add_child(bsp)
-		brow.add_child(UI.label("Prepárate para los flashes.", 18, CORAL, 0))
+		brow.add_child(UI.label("Brace for the flashes.", 18, CORAL, 0))
 		banner.add_child(brow)
 		add_child(banner)
 
@@ -97,8 +97,8 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 14)
 	side.add_child(col)
-	col.add_child(UI.label("¿Lista para más?", 30, ACCENT, 3))
-	var blurb := UI.label("Compra algo bonito. Después, tíralo al vórtice.", 18, Color.WHITE, 0)
+	col.add_child(UI.label("Ready for more?", 30, ACCENT, 3))
+	var blurb := UI.label("Buy something pretty. Then throw it into the vortex.", 18, Color.WHITE, 0)
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	blurb.custom_minimum_size = Vector2(0, 48)
 	col.add_child(blurb)
@@ -113,19 +113,19 @@ func _ready() -> void:
 	var nextcol := VBoxContainer.new()
 	nextcol.add_theme_constant_override("separation", 6)
 	var next := Button.new()
-	next.text = "Siguiente ronda"
+	next.text = "Next round"
 	next.custom_minimum_size = Vector2(0, 64)
 	next.add_theme_font_size_override("font_size", 30)
 	_style_button(next, ORANGE, ORANGE.lightened(0.2), ORANGE, UI.INK)
 	next.pressed.connect(_next_round)
 	nextcol.add_child(next)
-	var enter_hint := UI.label("Enter para continuar", 18, ORANGE, 0)
+	var enter_hint := UI.label("Press Enter to continue", 18, ORANGE, 0)
 	enter_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nextcol.add_child(enter_hint)
 	col.add_child(nextcol)
 
 	var quit := Button.new()
-	quit.text = "Terminar partida (Esc)"
+	quit.text = "End run (Esc)"
 	quit.custom_minimum_size = Vector2(0, 44)
 	quit.add_theme_font_size_override("font_size", 18)
 	_style_button(quit, DARK, HOVER_DARK, MUTED, MUTED)
@@ -141,7 +141,7 @@ func _ready() -> void:
 	var rcol := VBoxContainer.new()
 	rcol.custom_minimum_size = Vector2(488, 0)
 	rcol.add_theme_constant_override("separation", 4)
-	rcol.add_child(UI.label("TUS RELIQUIAS", 18, ACCENT, 2))
+	rcol.add_child(UI.label("YOUR RELICS", 18, ACCENT, 2))
 	relics_row = HBoxContainer.new()
 	relics_row.add_theme_constant_override("separation", 12)
 	rcol.add_child(relics_row)
@@ -149,7 +149,7 @@ func _ready() -> void:
 	var ccol := VBoxContainer.new()
 	ccol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ccol.add_theme_constant_override("separation", 4)
-	ccol.add_child(UI.label("CONSUMIBLES", 18, SKY, 2))
+	ccol.add_child(UI.label("CONSUMABLES", 18, SKY, 2))
 	stock_row = HBoxContainer.new()
 	stock_row.add_theme_constant_override("separation", 16)
 	ccol.add_child(stock_row)
@@ -209,7 +209,7 @@ func _make_card(i: int) -> PanelContainer:
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
 	if kind == "upgrade":
-		top.add_child(UI.label("Nivel %d/%d" % [Game.level(o["id"]), int(Game.UPGRADES[o["id"]]["max"])], 26, ORANGE, 3))
+		top.add_child(UI.label("Level %d/%d" % [Game.level(o["id"]), int(Game.UPGRADES[o["id"]]["max"])], 26, ORANGE, 3))
 	col.add_child(top)
 
 	# fila 2: icono + nombre y descripcion
@@ -244,13 +244,13 @@ func _make_card(i: int) -> PanelContainer:
 	var buy_col: Color = ORANGE if kind == "upgrade" else ACCENT
 	_style_button(btn, buy_col, buy_col.lightened(0.2), buy_col, UI.INK)
 	if o["sold"]:
-		btn.text = "VENDIDO"
+		btn.text = "SOLD"
 		btn.disabled = true
 	elif not Game.offer_available(o):
-		btn.text = "MÁXIMO" if kind == "upgrade" else "LLENO"
+		btn.text = "MAXED" if kind == "upgrade" else "FULL"
 		btn.disabled = true
 	else:
-		btn.text = "GRATIS" if o.get("free", false) else "Comprar %d" % Game.offer_price(o)
+		btn.text = "FREE" if o.get("free", false) else "Buy %d" % Game.offer_price(o)
 		btn.disabled = not Game.can_buy_offer(i)
 	btn.pressed.connect(_on_buy.bind(i))
 	col.add_child(btn)
@@ -264,10 +264,10 @@ func _make_info_block() -> Control:
 	var v := VBoxContainer.new()
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 12)
-	var t := UI.label("El lujo tiene límites.", 30, ACCENT, 3)
+	var t := UI.label("Luxury has limits.", 30, ACCENT, 3)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)
-	var d := UI.label("Las mejoras se acumulan. Las reliquias son únicas. Los consumibles tienen capacidad limitada.", 18, MUTED, 0)
+	var d := UI.label("Upgrades stack. Relics are unique. Consumables have limited capacity.", 18, MUTED, 0)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(d)
 	m.add_child(v)
@@ -298,7 +298,7 @@ func _clear(node: Node) -> void:
 		child.queue_free()
 
 func _refresh() -> void:
-	money_label.text = "Dinero: $%d" % Game.coins
+	money_label.text = "Cash: $%d" % Game.coins
 
 	_clear(grid)
 	for i in Game.shop_offers.size():
@@ -306,13 +306,13 @@ func _refresh() -> void:
 	grid.add_child(_make_info_block())
 
 	var cost := Game.reroll_cost()
-	reroll_button.text = "Renovar ofertas (%d)" % cost
+	reroll_button.text = "Reroll offers (%d)" % cost
 	reroll_button.disabled = Game.coins < cost
 
 	# reliquias que tienes (con mas de 2, solo iconos; el nombre sale al pasar el mouse)
 	_clear(relics_row)
 	if Game.relics.is_empty():
-		relics_row.add_child(UI.label("Ninguna todavía", 18, MUTED, 0))
+		relics_row.add_child(UI.label("None yet", 18, MUTED, 0))
 	else:
 		for id in Game.relics:
 			relics_row.add_child(_make_relic_chip(id, Game.relics.size() <= 2))
@@ -328,10 +328,10 @@ func _refresh() -> void:
 	for id in Game.CONSUMABLES.keys():
 		var n := Game.stock_of(id)
 		if n > 0:
-			var short_name: String = String(Game.CONSUMABLES[id]["name"]).split(" ")[0]
+			var short_name: String = String(Game.CONSUMABLES[id]["name"]).split(" ")[-1]
 			stock_row.add_child(UI.label("%s x%d" % [short_name, n], fsize, SKY, 3))
 	if shown == 0:
-		stock_row.add_child(UI.label("Ninguno", 18, MUTED, 0))
+		stock_row.add_child(UI.label("None", 18, MUTED, 0))
 
 # ---------------------------------------------------------------- Acciones
 

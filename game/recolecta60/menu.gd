@@ -41,20 +41,20 @@ func _ready() -> void:
 	box.add_child(title)
 	box.add_child(_label(Game.SUBTITLE, 20, Color(0.8, 0.8, 0.85)))
 	if Game.best_round_score > 0:
-		box.add_child(_label("Mejor ronda de esta sesion: %d puntos (ronda %d)" % [Game.best_round_score, Game.best_round_no], 22, Color(0.3, 0.9, 0.95)))
+		box.add_child(_label("Best round this session: %d points (round %d)" % [Game.best_round_score, Game.best_round_no], 22, Color(0.3, 0.9, 0.95)))
 	else:
 		box.add_child(_label(" ", 22, Color(1, 1, 1)))
 
-	var play := _button("Jugar  (Enter)")
+	var play := _button("Play  (Enter)")
 	play.pressed.connect(_play)
 	box.add_child(play)
-	var quit := _button("Salir  (Esc)")
+	var quit := _button("Quit  (Esc)")
 	quit.pressed.connect(get_tree().quit)
 	box.add_child(quit)
 
-	box.add_child(_label("WASD / Flechas: mover   |   E / Espacio: recoger cosas o tirarlas en el vórtice", 16, Color(0.7, 0.7, 0.75)))
-	box.add_child(_label("Q: bolsazo (mejora)   |   Shift: turbo   |   F: flash cegador   (se compran en la boutique)", 16, Color(0.7, 0.7, 0.75)))
-	box.add_child(_label("El progreso NO se guarda: al cerrar el juego se pierde todo.", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("WASD / Arrows: move   |   E / Space: pick up items or drop them into the vortex", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("Q: bag smack (upgrade)   |   Shift: turbo   |   F: blinding flash   (bought at the boutique)", 16, Color(0.7, 0.7, 0.75)))
+	box.add_child(_label("Progress is NOT saved: closing the game erases everything.", 16, Color(0.7, 0.7, 0.75)))
 
 func _label(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new()

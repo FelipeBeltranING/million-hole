@@ -15,7 +15,7 @@ func set_order(new_slots: Array) -> void:
 func _draw() -> void:
 	var font := UI.font()
 	draw_style_box(UI.panel_style(), Rect2(0, 0, W, H))
-	draw_string(font, Vector2(16, 38), "CAPRICHOS DE HOY", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, UI.YELLOW)
+	draw_string(font, Vector2(16, 38), "TODAY'S WHIMS", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, UI.YELLOW)
 	for i in slots.size():
 		var s = slots[i]
 		var item: Dictionary = s["item"]

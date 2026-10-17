@@ -7,55 +7,55 @@ const BASE_TIME := 30.0   # <<< TIEMPO DE UNA RONDA NORMAL (segundos), igual en 
 # ------------------------------------------------------------------ Mejoras permanentes (con niveles)
 # precio = base_cost * 1.5^nivel_actual * multiplicador de ronda (ver price_mult)
 const UPGRADES = {
-	"boots":      {"name": "Zapatillas de diseñador", "desc": "+10% de velocidad",                         "max": 5, "base_cost": 25},
-	"backpack":   {"name": "Bolso de marca",          "desc": "Cargas 1 objeto mas",                       "max": 2, "base_cost": 40},
-	"magnet":     {"name": "Imán de billetes",        "desc": "El dinero cercano vuela hacia ti",          "max": 3, "base_cost": 30},
-	"durable":    {"name": "Dinero duradero",         "desc": "+2 s de vida al dinero",                    "max": 3, "base_cost": 25},
-	"combo":      {"name": "Racha de caprichos",      "desc": "+2 s para mantener el combo",               "max": 3, "base_cost": 25},
-	"pocket":     {"name": "Reloj de pulsera",        "desc": "+5 s al empezar cada ronda",                "max": 4, "base_cost": 35},
-	"bolsazo":    {"name": "Bolsazo de diseñador",    "desc": "Q: aturde a los paparazzi cercanos",        "max": 3, "base_cost": 60},
-	"reach":      {"name": "Manos largas",            "desc": "+15 de alcance al recoger cosas",           "max": 3, "base_cost": 30},
-	"pitwide":    {"name": "Vórtice grande",             "desc": "El vórtice es 15% mas ancho",               "max": 3, "base_cost": 45},
-	"luck":       {"name": "Suerte de heredera",      "desc": "Salen mas cosas raras y legendarias",       "max": 3, "base_cost": 40},
-	"orderbonus": {"name": "Bonus de capricho",       "desc": "+25% de recompensa al completar caprichos", "max": 3, "base_cost": 50},
+	"boots":      {"name": "Designer Sneakers", "desc": "+10% speed",                         "max": 5, "base_cost": 25},
+	"backpack":   {"name": "Designer Tote",          "desc": "Carry 1 more item",                       "max": 2, "base_cost": 40},
+	"magnet":     {"name": "Cash Magnet",        "desc": "Nearby cash flies toward you",          "max": 3, "base_cost": 30},
+	"durable":    {"name": "Durable Cash",         "desc": "+2 s cash lifetime",                    "max": 3, "base_cost": 25},
+	"combo":      {"name": "Whim Streak",      "desc": "+2 s to keep your combo",               "max": 3, "base_cost": 25},
+	"pocket":     {"name": "Wristwatch",        "desc": "+5 s at the start of each round",                "max": 4, "base_cost": 35},
+	"bolsazo":    {"name": "Designer Bag Smack",    "desc": "Q: stuns nearby paparazzi",        "max": 3, "base_cost": 60},
+	"reach":      {"name": "Long Arms",            "desc": "+15 pickup reach",           "max": 3, "base_cost": 30},
+	"pitwide":    {"name": "Big Vortex",             "desc": "The vortex is 15% wider",               "max": 3, "base_cost": 45},
+	"luck":       {"name": "Heiress Luck",      "desc": "More rare and legendary items",       "max": 3, "base_cost": 40},
+	"orderbonus": {"name": "Whim Bonus",       "desc": "+25% reward for completing whims", "max": 3, "base_cost": 50},
 }
 
 # ------------------------------------------------------------------ Consumibles (se gastan; duran entre rondas)
 const CONSUMABLES = {
-	"shield": {"name": "Escudo de diamantes", "desc": "Bloquea el proximo golpe (automatico)",      "price": 25, "max": 3},
-	"turbo":  {"name": "Turbo de lujo",       "desc": "Shift: +70% de velocidad durante 3 s",       "price": 15, "max": 3},
-	"flash":  {"name": "Flash cegador",       "desc": "F: aturde a TODOS los paparazzi durante 5 s", "price": 30, "max": 3},
+	"shield": {"name": "Diamond Shield", "desc": "Blocks the next hit (automatic)",      "price": 25, "max": 3},
+	"turbo":  {"name": "Luxury Turbo",       "desc": "Shift: +70% speed for 3 s",       "price": 15, "max": 3},
+	"flash":  {"name": "Blinding Flash",       "desc": "F: stuns ALL paparazzi for 5 s", "price": 30, "max": 3},
 }
 
 # ------------------------------------------------------------------ Reliquias (unicas, con ventaja Y desventaja)
 const RELICS = {
-	"greed":        {"name": "Collar de la codicia",  "desc": "Dinero x2, pero los paparazzi van 30% mas rapido",        "price": 140},
-	"combo_ring":   {"name": "Anillo del combo",      "desc": "El combo llega a x5, pero dura 3 s menos",                "price": 120},
-	"shades":       {"name": "Gafas oscuras",         "desc": "Paparazzi 35% mas lentos, pero empiezas con 5 s menos",   "price": 110},
-	"blank_check":  {"name": "Cheque en blanco",      "desc": "+50% de puntos, pero la cuota sube 25%",                  "price": 130},
-	"tiara":        {"name": "Tiara de la reina",     "desc": "Legendarias x3 mas comunes, pero cargas 1 objeto menos",  "price": 125},
-	"perfume":      {"name": "Perfume carisimo",      "desc": "Paparazzi dormidos 12 s, pero ganas 30% menos de dinero", "price": 120},
-	"glass_shoes":  {"name": "Zapatos de cristal",    "desc": "+25% de velocidad, pero los golpes te aturden el doble",  "price": 115},
-	"golden_watch": {"name": "Reloj de oro macizo",   "desc": "+10 s al empezar, pero ya no salen relojes de bonus",     "price": 100},
+	"greed":        {"name": "Necklace of Greed",  "desc": "Cash x2, but paparazzi are 30% faster",        "price": 140},
+	"combo_ring":   {"name": "Combo Ring",      "desc": "Combo reaches x5, but lasts 3 s less",                "price": 120},
+	"shades":       {"name": "Dark Shades",         "desc": "Paparazzi 35% slower, but you start with 5 s less",   "price": 110},
+	"blank_check":  {"name": "Blank Check",      "desc": "+50% points, but the quota rises 25%",                  "price": 130},
+	"tiara":        {"name": "Queen's Tiara",     "desc": "Legendaries 3x more common, but you carry 1 item less",  "price": 125},
+	"perfume":      {"name": "Pricey Perfume",      "desc": "Paparazzi sleep for 12 s, but you earn 30% less cash", "price": 120},
+	"glass_shoes":  {"name": "Glass Slippers",    "desc": "+25% speed, but hits stun you twice as long",  "price": 115},
+	"golden_watch": {"name": "Solid Gold Watch",   "desc": "+10 s at the start, but no more bonus clocks",     "price": 100},
 }
 
 # ------------------------------------------------------------------ Contratos de riesgo (se elige uno antes de cada ronda)
 const CONTRACTS = {
-	"calm":     {"name": "Ronda tranquila",  "desc": "Sin cambios. La opción segura.", "risk": 0},
-	"double":   {"name": "Doble o nada",     "desc": "Peligros x2, +1 paparazzi, cuota +30%.\nDinero x2.",
+	"calm":     {"name": "Calm Round",  "desc": "No changes. The safe option.", "risk": 0},
+	"double":   {"name": "Double or Nothing",     "desc": "Hazards x2, +1 paparazzi, quota +30%.\nCash x2.",
 				 "hazard_mult": 2.0, "extra_pap": 1, "quota_mult": 1.3, "money_mult": 2.0, "risk": 2},
-	"rush":     {"name": "Prisa de compras", "desc": "10 s menos de tiempo.\nPuntos +30%, dinero x1.5.",
+	"rush":     {"name": "Shopping Rush", "desc": "10 s less time.\nPoints +30%, cash x1.5.",
 				 "time_add": -10.0, "score_mult": 1.3, "money_mult": 1.5, "risk": 1},
-	"vip":      {"name": "Paparazzi VIP",    "desc": "+2 paparazzi.\nDinero x1.75.",
+	"vip":      {"name": "VIP Paparazzi",    "desc": "+2 paparazzi.\nCash x1.75.",
 				 "extra_pap": 2, "money_mult": 1.75, "risk": 1},
-	"high":     {"name": "Cuota de lujo",    "desc": "Cuota +50%.\nDinero x2.5.",
+	"high":     {"name": "Luxury Quota",    "desc": "Quota +50%.\nCash x2.5.",
 				 "quota_mult": 1.5, "money_mult": 2.5, "risk": 2},
-	"slippery": {"name": "Piso de champán",  "desc": "Charcos y pinchos x3.\nDinero x1.5.",
+	"slippery": {"name": "Champagne Floor",  "desc": "Puddles and spikes x3.\nCash x1.5.",
 				 "hazard_mult": 3.0, "money_mult": 1.5, "risk": 1},
 }
 
-const TITLE := "MILLONES AL AGUJERO"
-const SUBTITLE := "Tira tus caprichos de lujo y convierte todo en dinero"
+const TITLE := "MILLION HOLE"
+const SUBTITLE := "Throw away your luxury whims and turn it all into cash"
 
 const MAGNET_RADII := [0.0, 90.0, 150.0, 220.0]
 

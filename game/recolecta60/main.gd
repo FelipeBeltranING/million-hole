@@ -276,7 +276,7 @@ func _on_items_deposited(items: Array) -> void:
 		slot_bonus = roundi(float(slot_bonus) * om)
 		score += slot_bonus
 		Sound.play("sfx_order_item")
-		hud.toast("Pedido +%d" % slot_bonus, Color(1.0, 0.82, 0.15))
+		hud.toast("Whim +%d" % slot_bonus, Color(1.0, 0.82, 0.15))
 	_spawn_coins(coin_total)
 	hud.set_score(score)
 	_check_quota()
@@ -294,7 +294,7 @@ func _on_items_deposited(items: Array) -> void:
 		if boss != null:
 			_damage_boss()
 		else:
-			hud.toast("¡PEDIDO COMPLETO!  +%ds" % int(ORDER_COMPLETE_TIME), Color(0.3, 0.95, 0.4))
+			hud.toast("WHIM COMPLETE!  +%ds" % int(ORDER_COMPLETE_TIME), Color(0.3, 0.95, 0.4))
 		_new_order()
 	else:
 		_refresh_highlights()
@@ -309,20 +309,20 @@ func _check_quota() -> void:
 func _show_quota_toast() -> void:
 	if running:
 		Sound.play("sfx_quota")
-		hud.toast("¡CUOTA CUMPLIDA!", Color(0.4, 1.0, 0.5))
+		hud.toast("QUOTA REACHED!", Color(0.4, 1.0, 0.5))
 
 func _on_pit_relocating(secs: float) -> void:
 	Sound.play("sfx_vortex_warn")
-	hud.toast("¡El vórtice se muda!", Color(1.0, 0.82, 0.15))
+	hud.toast("The vortex is moving!", Color(1.0, 0.82, 0.15))
 
 func _on_pit_relocated() -> void:
 	pass
 
 func _on_shield_blocked() -> void:
-	hud.toast("¡ESCUDO!", Color(0.4, 0.9, 1.0))
+	hud.toast("SHIELD!", Color(0.4, 0.9, 1.0))
 
 func _on_player_hit(dropped: Array) -> void:
-	hud.toast("¡AUCH!", Color(1.0, 0.3, 0.3))
+	hud.toast("OUCH!", Color(1.0, 0.3, 0.3))
 	var m := Vector2(20, 20)
 	for it in dropped:
 		var p: Vector2 = player.position + Vector2.from_angle(randf() * TAU) * randf_range(40.0, 90.0)
@@ -420,9 +420,9 @@ func _spawn_hazards() -> void:
 			else:
 				move_child(h, player.get_index())   # encima de objetos, debajo del jugador
 	if r == Game.HAZARD_START_ROUND:
-		hud.toast("¡Cuidado! Charcos y pinchos", Color(1.0, 0.6, 0.2))
+		hud.toast("Watch out! Puddles and spikes", Color(1.0, 0.6, 0.2))
 	elif r == Game.PAPARAZZI_START_ROUND:
-		hud.toast("¡Cuidado! Paparazzi", Color(1.0, 0.6, 0.2))   # (usa el bolsazo para aturdirlos)
+		hud.toast("Watch out! Paparazzi", Color(1.0, 0.6, 0.2))   # (usa el bolsazo para aturdirlos)
 
 # ---------------------------------------------------------------- Jefe
 
@@ -443,7 +443,7 @@ func _spawn_boss() -> void:
 	move_child(boss, player.get_index())
 	Sound.play("sfx_boss_intro")
 	hud.set_boss(boss.hp, boss.max_hp)
-	hud.toast("¡GALA!  Completa caprichos para derrotar al jefe", Color(1.0, 0.82, 0.15))
+	hud.toast("GALA NIGHT!  Complete whims to defeat the boss", Color(1.0, 0.82, 0.15))
 
 # Cada capricho completado le hace 1 de daño al jefe
 func _damage_boss() -> void:
@@ -461,15 +461,15 @@ func _damage_boss() -> void:
 		_spawn_coins(40)
 		hud.hide_boss()
 		Sound.play("sfx_boss_defeated")
-		hud.toast("¡JEFE DERROTADO!", Color(1.0, 0.82, 0.15))
+		hud.toast("BOSS DEFEATED!", Color(1.0, 0.82, 0.15))
 	else:
 		var was_raging: bool = boss.is_raging()
 		boss.boss_damaged(away)
 		hud.set_boss(boss.hp, boss.max_hp)
 		if boss.is_raging() and not was_raging:
 			Sound.play("sfx_boss_rage")
-			hud.toast("¡EL JEFE SE ENFURECE!", Color(1.0, 0.25, 0.3))
-		hud.toast("¡GOLPE AL JEFE!  (%d/%d)" % [boss.max_hp - boss.hp, boss.max_hp], Color(1.0, 0.55, 0.2))
+			hud.toast("THE BOSS IS ENRAGED!", Color(1.0, 0.25, 0.3))
+		hud.toast("BOSS HIT!  (%d/%d)" % [boss.max_hp - boss.hp, boss.max_hp], Color(1.0, 0.55, 0.2))
 
 # ---------------------------------------------------------------- Fin
 

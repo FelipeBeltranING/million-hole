@@ -56,7 +56,7 @@ func _ready() -> void:
 	_build_relics()
 	_build_tools()
 	_build_boss()
-	var help := UI.label("WASD / Flechas: mover   ·   E / Espacio: recoger y tirar en el vórtice   ·   Q bolsazo   ·   Shift turbo   ·   F flash", 16, UI.GRAY, 4)
+	var help := UI.label("WASD / Arrows: move   ·   E / Space: pick up and drop into the vortex   ·   Q bag smack   ·   Shift turbo   ·   F flash", 16, UI.GRAY, 4)
 	help.position = Vector2(24, 682)
 	add_child(help)
 	_build_result()
@@ -110,11 +110,11 @@ func _build_top_bar() -> void:
 	ticon.position = Vector2(24, 14)
 	ticon.show_icon("icon_time", "T", UI.CYAN)
 	add_child(ticon)
-	time_label = UI.label("Tiempo: 30", 34, Color.WHITE, 8)
+	time_label = UI.label("Time: 30", 34, Color.WHITE, 8)
 	time_label.position = Vector2(80, 12)
 	add_child(time_label)
 	# puntos / cuota (centro)
-	score_label = UI.label("Puntos: 0 / 0", 32, Color.WHITE, 8)
+	score_label = UI.label("Score: 0 / 0", 32, Color.WHITE, 8)
 	score_label.position = Vector2(340, 4)
 	score_label.size = Vector2(600, 40)
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -124,7 +124,7 @@ func _build_top_bar() -> void:
 	score_bar.size = Vector2(320, 12)
 	add_child(score_bar)
 	# dinero (derecha)
-	coins_label = UI.label("Dinero: $0", 34, Color.WHITE, 8)
+	coins_label = UI.label("Cash: $0", 34, Color.WHITE, 8)
 	coins_label.position = Vector2(880, 12)
 	coins_label.size = Vector2(320, 44)
 	coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -139,8 +139,8 @@ func _build_round_card() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	p.add_child(v)
-	round_label = UI.label("Ronda 1", 32, UI.YELLOW)
-	contract_label = UI.label("Contrato: -", 18, Color.WHITE, 4)
+	round_label = UI.label("Round 1", 32, UI.YELLOW)
+	contract_label = UI.label("Contract: -", 18, Color.WHITE, 4)
 	best_label = UI.label("", 15, UI.GRAY, 3)
 	v.add_child(round_label)
 	v.add_child(contract_label)
@@ -151,7 +151,7 @@ func _build_carry() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
-	carry_title = UI.label("Llevas 0/2", 28)
+	carry_title = UI.label("Carrying 0/2", 28)
 	v.add_child(carry_title)
 	carry_row = HBoxContainer.new()
 	carry_row.add_theme_constant_override("separation", 8)
@@ -173,7 +173,7 @@ func _build_relics() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
 	relics_panel.add_child(v)
-	v.add_child(UI.label("RELIQUIAS", 18, UI.YELLOW, 4))
+	v.add_child(UI.label("RELICS", 18, UI.YELLOW, 4))
 	relics_row = HBoxContainer.new()
 	relics_row.add_theme_constant_override("separation", 6)
 	v.add_child(relics_row)
@@ -188,10 +188,10 @@ func _build_tools() -> void:
 	tools_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(tools_box)
 	var defs := [
-		{"id": "bolsazo", "name": "Bolsazo", "key": "Q", "glyph": "B"},
+		{"id": "bolsazo", "name": "Bag Smack", "key": "Q", "glyph": "B"},
 		{"id": "turbo", "name": "Turbo", "key": "Shift", "glyph": "T"},
 		{"id": "flash", "name": "Flash", "key": "F", "glyph": "F"},
-		{"id": "shield", "name": "Escudo", "key": "Auto", "glyph": "E"},
+		{"id": "shield", "name": "Shield", "key": "Auto", "glyph": "S"},
 	]
 	for d in defs:
 		var card := PanelContainer.new()
@@ -229,7 +229,7 @@ func _build_boss() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	boss_panel.add_child(v)
-	var t := UI.label("PAPARAZZI SUPREMO", 26, UI.RED, 6)
+	var t := UI.label("SUPREME PAPARAZZI", 26, UI.RED, 6)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	boss_row = HBoxContainer.new()
@@ -281,7 +281,7 @@ func _build_result() -> void:
 # ---------------------------------------------------------------- Actualizacion (API usada por main.gd)
 
 func set_time(seconds: float) -> void:
-	time_label.text = "Tiempo: %d" % ceili(seconds)
+	time_label.text = "Time: %d" % ceili(seconds)
 	time_label.add_theme_color_override("font_color", UI.RED.lightened(0.2) if seconds <= 10.0 else Color.WHITE)
 
 # Herramientas: bolsazo (si lo tienes), turbo, flash y escudo. Se llama cada frame (solo cambia valores).
@@ -311,17 +311,17 @@ func set_quota(q: int) -> void:
 
 # Puntos / cuota; la barra y el texto se ponen verdes al llegar a la cuota
 func set_score(points: int) -> void:
-	score_label.text = "Puntos: %d / %d" % [points, quota_value]
+	score_label.text = "Score: %d / %d" % [points, quota_value]
 	var reached := points >= quota_value
 	score_label.add_theme_color_override("font_color", UI.GREEN if reached else Color.WHITE)
 	score_bar.value = float(points)
 	_bar_color(score_bar, UI.GREEN if reached else UI.YELLOW)
 
 func set_coins(amount: int) -> void:
-	coins_label.text = "Dinero: $%d" % amount
+	coins_label.text = "Cash: $%d" % amount
 
 func set_carry(carried: Array, max_carry: int) -> void:
-	carry_title.text = "Llevas %d/%d" % [carried.size(), max_carry]
+	carry_title.text = "Carrying %d/%d" % [carried.size(), max_carry]
 	for c in carry_row.get_children():
 		carry_row.remove_child(c)
 		c.queue_free()
@@ -349,9 +349,9 @@ func set_combo(combo: int, mult: float, secs: float) -> void:
 	combo_bar.value = secs
 
 func set_round(round_number: int, best: int, contract_name: String = "") -> void:
-	round_label.text = "Ronda %d" % round_number
-	contract_label.text = "Contrato: %s" % contract_name
-	best_label.text = "Mejor ronda: %d pts" % best
+	round_label.text = "Round %d" % round_number
+	contract_label.text = "Contract: %s" % contract_name
+	best_label.text = "Best round: %d pts" % best
 
 func set_relics(ids: Array) -> void:
 	for c in relics_row.get_children():
@@ -407,11 +407,11 @@ func show_round_result(info: Dictionary) -> void:
 	var size := get_viewport().get_visible_rect().size
 	var text := "[center]"
 	if info["passed"]:
-		var title := "RONDA %d SUPERADA" % info["round"]
+		var title := "ROUND %d CLEARED" % info["round"]
 		if info["boss_round"]:
-			title = "¡GALA SUPERADA!\nJEFE DERROTADO"
+			title = "GALA CLEARED!\nBOSS DEFEATED"
 		text += "[color=#5CF07A][font_size=42]%s[/font_size][/color]\n\n" % title
-		text += "Puntos: %d / cuota %d      Dinero: $%d      Caprichos: %d\nContrato: %s\n\n" % [
+		text += "Score: %d / quota %d      Cash: $%d      Whims: %d\nContract: %s\n\n" % [
 			info["score"], info["quota"], info["coins"], info["orders"], info["contract"]]
 		var row := PackedStringArray()
 		for item_name in info["tally"]:
@@ -422,24 +422,24 @@ func show_round_result(info: Dictionary) -> void:
 		if row.size() > 0:
 			text += "     ".join(row) + "\n"
 		if info["boss_round"]:
-			text += "\n[color=#FFE61A]PREMIO: una reliquia GRATIS en la boutique[/color]\n"
+			text += "\n[color=#FFE61A]REWARD: a FREE relic at the boutique[/color]\n"
 		if info["new_record"]:
-			text += "\n[color=#FFE61A]NUEVO RECORD DE LA SESION[/color]"
-		hint_label.text = "ENTER: ir a la boutique     |     ESC: terminar partida"
+			text += "\n[color=#FFE61A]NEW SESSION RECORD[/color]"
+		hint_label.text = "ENTER: go to the boutique     |     ESC: end run"
 	else:
-		text += "[color=#FF4D59][font_size=42]FIN DE LA PARTIDA[/font_size][/color]\n\n"
+		text += "[color=#FF4D59][font_size=42]GAME OVER[/font_size][/color]\n\n"
 		if info["score"] < info["quota"]:
-			text += "No llegaste a la cuota en la ronda %d\nPuntos: %d / cuota %d   (te faltaron %d)\n" % [
+			text += "You missed the quota in round %d\nScore: %d / quota %d   (%d short)\n" % [
 				info["round"], info["score"], info["quota"], info["quota"] - info["score"]]
 		if info["boss_round"] and not info["boss_defeated"]:
-			text += "No derrotaste al Paparazzi Supremo\n(completa caprichos para dañarlo)\n"
+			text += "You did not defeat the Supreme Paparazzi\n(complete whims to damage him)\n"
 		text += "\n"
-		text += "Rondas superadas: %d\n" % (int(info["round"]) - 1)
-		text += "Mejor ronda de esta partida: %d puntos (ronda %d)\n" % [info["run_best_score"], info["run_best_round"]]
-		text += "Record de la sesion: %d puntos (ronda %d)\n" % [info["session_best"], info["session_best_round"]]
+		text += "Rounds cleared: %d\n" % (int(info["round"]) - 1)
+		text += "Best round this run: %d points (round %d)\n" % [info["run_best_score"], info["run_best_round"]]
+		text += "Session record: %d points (round %d)\n" % [info["session_best"], info["session_best_round"]]
 		if info["new_record"]:
-			text += "\n[color=#FFE61A]NUEVO RECORD DE LA SESION[/color]"
-		hint_label.text = "ENTER: jugar de nuevo     |     ESC: volver al menu"
+			text += "\n[color=#FFE61A]NEW SESSION RECORD[/color]"
+		hint_label.text = "ENTER: play again     |     ESC: back to menu"
 	text += "[/center]"
 	dim.size = size
 	dim.visible = true
