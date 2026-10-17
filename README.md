@@ -5,7 +5,7 @@
 ### Throw away your luxury whims and turn it all into cash.
 
 [![Play on itch.io](https://img.shields.io/badge/Play%20on-itch.io-fa5c5c?style=for-the-badge&logo=itchdotio&logoColor=white)](https://felipebeltran.itch.io/million-hole)
-[![Presentation page](https://img.shields.io/badge/Presentation-GitHub%20Pages-ff8a1f?style=for-the-badge&logo=github&logoColor=white)](https://felipebeltraning.github.io/ProyectoGameJam-1_/)
+[![Presentation page](https://img.shields.io/badge/Presentation-GitHub%20Pages-ff8a1f?style=for-the-badge&logo=github&logoColor=white)](https://felipebeltraning.github.io/million-hole/)
 
 ![Godot 4.6](https://img.shields.io/badge/Godot-4.6-478cbf?logo=godotengine&logoColor=white)
 ![Genre](https://img.shields.io/badge/genre-arcade%20roguelike-8a4dff)
@@ -21,7 +21,7 @@
 
 Made for the **Revival Game Jam**, whose theme is bringing something old back to life. The game is inspired by *Princesa Más Billetes* (“Princess Plus Bills”).
 
-👉 **[Visit the presentation page](https://felipebeltraning.github.io/ProyectoGameJam-1_/)** · 🎮 **[Play it on itch.io](https://felipebeltran.itch.io/million-hole)**
+👉 **[Visit the presentation page](https://felipebeltraning.github.io/million-hole/)** · 🎮 **[Play it on itch.io](https://felipebeltran.itch.io/million-hole)**
 
 ## How it plays
 
@@ -81,7 +81,7 @@ To make the web version: **Project → Export → Web**, then zip the exported f
 ## Credits
 
 - **Programming and game design:** [FelipeBeltranING](https://github.com/FelipeBeltranING)
-- **Art and audio:** *add the names of your artists and the sources of every sound and music track here*
+- **Art and audio: [looleo2614](https://github.com/looleo2614) 
 - **Font:** [Lilita One](https://fonts.google.com/specimen/Lilita+One) (SIL Open Font License)
 - **Engine:** [Godot](https://godotengine.org/)
 - **Inspiration:** *Princesa Más Billetes*
