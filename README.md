@@ -81,7 +81,7 @@ To make the web version: **Project → Export → Web**, then zip the exported f
 ## Credits
 
 - **Programming and game design:** [FelipeBeltranING](https://github.com/FelipeBeltranING)
-- **Art and audio: [looleo2614](https://github.com/looleo2614) 
+- **Art and audio**: [looleo2614](https://github.com/looleo2614) 
 - **Font:** [Lilita One](https://fonts.google.com/specimen/Lilita+One) (SIL Open Font License)
 - **Engine:** [Godot](https://godotengine.org/)
-- **Inspiration:** *Princesa Más Billetes*
+- **Inspiration:** *Princesa Más Billetes/Princess Morebucks*
