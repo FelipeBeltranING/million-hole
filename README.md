@@ -19,7 +19,7 @@
 
 **Million Hole** is a fast top-down arcade roguelike. You are a spoiled heiress with way too much stuff: grab luxury items, toss them into the vortex, and watch them turn into coins, bills and gold bars. Reach the quota before the 30-second clock runs out… while the paparazzi hunt you down.
 
-Made for the **Revival Game Jam**, whose theme is bringing something old back to life. The game is inspired by *Princesa Más Billetes* (“Princess Plus Bills”).
+Made for the **Revival Game Jam**, whose theme is bringing something old back to life. The game is inspired by *Princesa Más Billetes* (“Princess Morebucks”).
 
 👉 **[Visit the presentation page](https://felipebeltraning.github.io/million-hole/)** · 🎮 **[Play it on itch.io](https://felipebeltran.itch.io/million-hole)**
 
